@@ -1,48 +1,51 @@
-﻿using Raylib;
-using rl = Raylib.Raylib;
+﻿using System;
+using System.Collections.Generic;
+using Raylib;
+using static Raylib.Raylib;
 
-namespace ConsoleApp1
+namespace MatrixHierarchies
 {
     static class Program
     {
-        public static int Main()
-        {
-            // Initialization
-            //--------------------------------------------------------------------------------------
-            int screenWidth = 800;
-            int screenHeight = 450;
+        static void Main(string[] args)        {
+            Game game = new Game();
 
-            rl.InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+            Random rng = new Random();
 
-            rl.SetTargetFPS(60);
-            //--------------------------------------------------------------------------------------
+            InitWindow(640, 480, flavor());
 
-            // Main game loop
-            while (!rl.WindowShouldClose())    // Detect window close button or ESC key
+            game.Init();
+
+            while (!WindowShouldClose())
             {
-                // Update
-                //----------------------------------------------------------------------------------
-                // TODO: Update your variables here
-                //----------------------------------------------------------------------------------
-
-                // Draw
-                //----------------------------------------------------------------------------------
-                rl.BeginDrawing();
-
-                rl.ClearBackground(Color.RAYWHITE);
-
-                rl.DrawText("Congrats! You created your first window!", 190, 200, 20, Color.LIGHTGRAY);
-
-                rl.EndDrawing();
-                //----------------------------------------------------------------------------------
+                game.Update();
+                game.Draw();
             }
 
-            // De-Initialization
-            //--------------------------------------------------------------------------------------
-            rl.CloseWindow();        // Close window and OpenGL context
-                                     //--------------------------------------------------------------------------------------
+            game.Shutdown();
 
-            return 0;
+            CloseWindow();
+
+            string flavor()
+            {
+                string result = "";
+                switch (rng.Next(1, 4))
+                {
+                    case 1:
+                        result = "Are you actually reading the window name?";
+                        break;
+                    case 2:
+                        result = "This took like a minute to do.";
+                        break;
+                    case 3:
+                        result = "I may be wasting my time, but at least I'm amused.";
+                        break;
+                    default:
+                        result = "Blank Text.";
+                        break;
+                }
+                return result;
+            }
         }
     }
 }
