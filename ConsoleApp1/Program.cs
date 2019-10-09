@@ -7,25 +7,11 @@ namespace MatrixHierarchies
 {
     static class Program
     {
-        static void Main(string[] args)        {
+        static void Main(string[] args)
+        {
             Game game = new Game();
 
             Random rng = new Random();
-
-            InitWindow(640, 480, flavor());
-
-            game.Init();
-
-            while (!WindowShouldClose())
-            {
-                game.Update();
-                game.Draw();
-            }
-
-            game.Shutdown();
-
-            CloseWindow();
-
             string flavor()
             {
                 string result = "";
@@ -46,6 +32,20 @@ namespace MatrixHierarchies
                 }
                 return result;
             }
+
+            InitWindow(640, 480, flavor());
+
+            game.Init();
+
+            while (!WindowShouldClose())
+            {
+                game.Update();
+                game.Draw();
+            }
+
+            game.Shutdown();
+
+            CloseWindow();
         }
     }
 }

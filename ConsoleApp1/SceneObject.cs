@@ -11,8 +11,8 @@ namespace MatrixHierarchies
         protected SceneObject parent = null;
         protected List<SceneObject> children = new List<SceneObject>();
 
-        protected Matrix3 localTransform = new Matrix3();
-        protected Matrix3 globalTransform = new Matrix3();
+        protected Matrix3 localTransform = Matrix3.identity;
+        protected Matrix3 globalTransform = Matrix3.identity;
 
         public SceneObject()
         {

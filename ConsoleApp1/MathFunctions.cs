@@ -91,7 +91,7 @@ namespace MathFunctions
         /// <param name="compareTo">Other Vector2 to compare to for angle calculation.</param>
         public float AngleBetween(Vector2 compareTo)
         {
-            // Normalize both Vector3s
+            // Normalize both Vector2s
             Vector2 a = GetNormalized();
             Vector2 b = compareTo.GetNormalized();
 
@@ -333,7 +333,8 @@ namespace MathFunctions
         public static Vector4 operator +(Vector4 lhs, Vector4 rhs)
         {
             return new Vector4(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w);
-        }
+        }
+
         // Subtraction
         public static Vector4 operator -(Vector4 lhs, Vector4 rhs)
         {
@@ -348,7 +349,9 @@ namespace MathFunctions
         public static Vector4 operator *(float lhs, Vector4 rhs)
         {
             return new Vector4(lhs * rhs.x, lhs * rhs.y, lhs * rhs.z, lhs * rhs.w);
-        }        // Division
+        }
+
+        // Division
         public static Vector4 operator /(Vector4 lhs, float rhs)
         {
             return new Vector4(lhs.x / rhs, lhs.y / rhs, lhs.z / rhs, lhs.w / rhs);
@@ -356,7 +359,8 @@ namespace MathFunctions
         public static Vector4 operator /(float lhs, Vector4 rhs)
         {
             return new Vector4(lhs / rhs.x, lhs / rhs.y, lhs / rhs.z, lhs / rhs.w);
-        }
+        }
+
         // Dot Product
         public float Dot(Vector4 rhs)
         {
@@ -379,9 +383,6 @@ namespace MathFunctions
     // MATRIX2 ----------------------------------------------------------------------------------
     public struct Matrix2
     {
-        // m1, m3
-        // m2, m4
-
         public float m1, m2, m3, m4;
 
         public static Matrix2 identity = new Matrix2(1, 0, 0, 1);
@@ -483,14 +484,14 @@ namespace MathFunctions
             Console.WriteLine($"{m1}, {m2}");
             Console.WriteLine($"{m3}, {m4}");
         }
-
+        
+        // Multiplication
         public static Matrix2 operator *(Matrix2 lhs, Matrix2 rhs)
         {
             return new Matrix2(
                 lhs.m1 * rhs.m1 + lhs.m2 + rhs.m3, lhs.m1 * rhs.m2 + lhs.m2 * rhs.m4,
                 lhs.m3 * rhs.m1 + lhs.m4 + rhs.m3, lhs.m3 * rhs.m2 + lhs.m4 * rhs.m4);
         }
-
         public static Vector2 operator *(Matrix2 lhs, Vector2 rhs)
         {
             return new Vector2((lhs.m1 * rhs.x) + (lhs.m3 * rhs.y),
@@ -502,10 +503,6 @@ namespace MathFunctions
     // MATRIX3 ----------------------------------------------------------------------------------
     public struct Matrix3
     {
-        // m1, m4, m7
-        // m2, m5, m8
-        // m3, m6, m9
-
         public float m1, m2, m3, m4, m5, m6, m7, m8, m9;
 
         public static Matrix3 identity = new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
@@ -515,18 +512,9 @@ namespace MathFunctions
         /// </summary>
         public Matrix3(float M1, float M2, float M3, float M4, float M5, float M6, float M7, float M8, float M9)
         {
-            // Okay so this would make everything Row Major and
-            // all the later examples really want to use Column
-            // Major. Because of this, we have to use just this
-            // system for the sake of consistancy.
-
-            //m1 = M1; m2 = M2; m3 = M3;
-            //m4 = M4; m5 = M5; m6 = M6;
-            //m7 = M7; m8 = M8; m9 = M9;
-
-            m1 = M1; m4 = M2; m7 = M3;
-            m2 = M4; m5 = M5; m8 = M6;
-            m3 = M7; m6 = M8; m9 = M9;
+            m1 = M1; m2 = M2; m3 = M3;
+            m4 = M4; m5 = M5; m6 = M6;
+            m7 = M7; m8 = M8; m9 = M9;
         }
 
         /// <summary>
@@ -545,9 +533,19 @@ namespace MathFunctions
         public Matrix3 GetTransposed()
         {
             return new Matrix3(
-                m1, m2, m3,
-                m4, m5, m6,
-                m7, m8, m9);
+                m1, m4, m7,
+                m2, m5, m8,
+                m3, m6, m9);
+        }
+
+        /// <summary>
+        /// DEBUG TOOL: For printing out the numbers in the Matrix3.
+        /// </summary>
+        public void PrintCels()
+        {
+            Console.WriteLine($"{m1}, {m2}, {m3}");
+            Console.WriteLine($"{m4}, {m5}, {m6}");
+            Console.WriteLine($"{m7}, {m8}, {m9}");
         }
 
         // Scaling --------------------------------------
@@ -588,7 +586,7 @@ namespace MathFunctions
             Matrix3 m = new Matrix3(
                 1, 0, 0,
                 0, (float)Math.Cos(radians), (float)Math.Sin(radians),
-                0, (float)-Math.Sin(radians), (float)Math.Cos(radians));
+                0, -(float)Math.Sin(radians), (float)Math.Cos(radians));
 
             Set(m);
         }
@@ -604,7 +602,7 @@ namespace MathFunctions
         public void SetRotateY(double radians)
         {
             Matrix3 m = new Matrix3(
-                (float)Math.Cos(radians), 0, (float)-Math.Sin(radians),
+                (float)Math.Cos(radians), 0, -(float)Math.Sin(radians),
                 0, 1, 0,
                 (float)Math.Sin(radians), 0, (float)Math.Cos(radians));
 
@@ -623,7 +621,7 @@ namespace MathFunctions
         {
             Matrix3 m = new Matrix3(
                 (float)Math.Cos(radians), (float)Math.Sin(radians), 0,
-                (float)-Math.Sin(radians), (float)Math.Cos(radians), 0,
+                -(float)Math.Sin(radians), (float)Math.Cos(radians), 0,
                 0, 0, 1);
 
             Set(m);
@@ -649,16 +647,6 @@ namespace MathFunctions
             Set(z * y * x);
         }
 
-        /// <summary>
-        /// DEBUG TOOL: For printing out the numbers in the Matrix3.
-        /// </summary>
-        public void PrintCels()
-        {
-            Console.WriteLine($"{m1}, {m4}, {m7}");
-            Console.WriteLine($"{m2}, {m5}, {m8}");
-            Console.WriteLine($"{m3}, {m6}, {m9}");
-        }
-
         // Translating ------------------------
         public void SetTranslation(float x, float y)
         {
@@ -672,7 +660,10 @@ namespace MathFunctions
         // Multiplication
         public static Matrix3 operator *(Matrix3 lhs, Matrix3 rhs)
         {
-            return new Matrix3(
+            // NOTES: So because of the magic of column/row major stuff we need this transpose at the end.
+            // Please just. Don't ask questions.
+
+            Matrix3 result = new Matrix3(
             lhs.m1 * rhs.m1 + lhs.m4 * rhs.m2 + lhs.m7 * rhs.m3,
             lhs.m1 * rhs.m4 + lhs.m4 * rhs.m5 + lhs.m7 * rhs.m6,
             lhs.m1 * rhs.m7 + lhs.m4 * rhs.m8 + lhs.m7 * rhs.m9,
@@ -684,6 +675,8 @@ namespace MathFunctions
             lhs.m3 * rhs.m1 + lhs.m6 * rhs.m2 + lhs.m9 * rhs.m3,
             lhs.m3 * rhs.m4 + lhs.m6 * rhs.m5 + lhs.m9 * rhs.m6,
             lhs.m3 * rhs.m7 + lhs.m6 * rhs.m8 + lhs.m9 * rhs.m9);
+
+            return result.GetTransposed();
         }
 
         public static Vector3 operator *(Matrix3 lhs, Vector3 rhs)
@@ -704,10 +697,10 @@ namespace MathFunctions
 
         public Matrix4(float M1, float M2, float M3, float M4, float M5, float M6, float M7, float M8, float M9, float M10, float M11, float M12, float M13, float M14, float M15, float M16)
         {
-            m1 = M1; m5 = M2; m9 = M3; m13 = M4;
-            m2 = M5; m6 = M6; m10 = M7; m14 = M8;
-            m3 = M9; m7 = M10; m11 = M11; m15 = M12;
-            m4 = M13; m8 = M14; m12 = M15; m16 = M16;
+            m1 = M1; m2 = M2; m3 = M3; m4 = M4;
+            m5 = M5; m6 = M6; m7 = M7; m8 = M8;
+            m9 = M9; m10 = M10; m11 = M11; m12 = M12;
+            m13 = M13; m14 = M14; m15 = M15; m16 = M16;
         }
 
         /// <summary>
@@ -738,10 +731,10 @@ namespace MathFunctions
         /// </summary>
         public void PrintCels()
         {
-            Console.WriteLine($"{m1}, {m5}, {m9}, {m13}");
-            Console.WriteLine($"{m2}, {m6}, {m10}, {m14}");
-            Console.WriteLine($"{m3}, {m7}, {m11}, {m15}");
-            Console.WriteLine($"{m4}, {m8}, {m12}, {m16}");
+            Console.WriteLine($"{m1}, {m2}, {m3}, {m4}");
+            Console.WriteLine($"{m5}, {m6}, {m7}, {m8}");
+            Console.WriteLine($"{m9}, {m10}, {m11}, {m12}");
+            Console.WriteLine($"{m13}, {m14}, {m15}, {m16}");
         }
 
         // Scaling -----------------------------------
@@ -782,7 +775,7 @@ namespace MathFunctions
             Matrix4 m = new Matrix4(
             1, 0, 0, 0,
             0, (float)Math.Cos(radians), (float)Math.Sin(radians), 0,
-            0, (float)-Math.Sin(radians), (float)Math.Cos(radians), 0,
+            0, -(float)Math.Sin(radians), (float)Math.Cos(radians), 0,
             0, 0, 0, 1);
 
             Set(m);
@@ -798,7 +791,7 @@ namespace MathFunctions
         public void SetRotateY(double radians)
         {
             Matrix4 m = new Matrix4(
-                (float)Math.Cos(radians), 0, (float)-Math.Sin(radians), 0,
+                (float)Math.Cos(radians), 0, -(float)Math.Sin(radians), 0,
                 0, 1, 0, 0,
                 (float)Math.Sin(radians), 0, (float)Math.Cos(radians), 0,
                 0, 0, 0, 1);
@@ -817,7 +810,7 @@ namespace MathFunctions
         {
             Matrix4 m = new Matrix4(
                 (float)Math.Cos(radians), (float)Math.Sin(radians), 0, 0,
-                (float)-Math.Sin(radians), (float)Math.Cos(radians), 0, 0,
+                -(float)Math.Sin(radians), (float)Math.Cos(radians), 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1);
 
@@ -882,7 +875,6 @@ namespace MathFunctions
 
             return result.GetTransposed();
         }
-
         public static Vector4 operator *(Matrix4 lhs, Vector4 rhs)
         {
             return new Vector4(

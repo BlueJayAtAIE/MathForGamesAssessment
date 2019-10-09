@@ -34,7 +34,7 @@ namespace MatrixHierarchies
         public override void OnDraw()
         {
             // Pulls the rotation in radians and converts to degrees for use in Raylib's draw funtion.
-            float rotation = (float)Math.Atan2(GlobalTransform.m2, GlobalTransform.m1);
+            float rotation = (float)Math.Atan2(globalTransform.m2, globalTransform.m1);
 
             DrawTextureEx(texture, new Vector2(globalTransform.m7, globalTransform.m8), rotation * (float)(180.0f / Math.PI), 1, Color.WHITE);
         }

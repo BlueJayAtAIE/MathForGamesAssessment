@@ -19,6 +19,7 @@ namespace MatrixHierarchies
         private int frames;
 
         private float deltaTime = 0.005f;
+        private float playerSpeed = 100f;
 
         SceneObject tankObject = new SceneObject();
         SceneObject turretObject = new SceneObject();
@@ -70,7 +71,44 @@ namespace MatrixHierarchies
             }
             frames++;
 
+            //PLAYER MOVEMENT --------------------------------------
+            if (IsKeyDown(KeyboardKey.KEY_A))
+            {
+                tankObject.Rotate(-deltaTime);
+            }
+            if (IsKeyDown(KeyboardKey.KEY_D))
+            {
+                tankObject.Rotate(deltaTime);
+            }
+            if (IsKeyDown(KeyboardKey.KEY_W))
+            {
+                Vector3 facing = new Vector3(
+               tankObject.LocalTransform.m1,
+               tankObject.LocalTransform.m2, 1) * deltaTime * playerSpeed;
+                tankObject.Translate(facing.x, facing.y);
+            }
+            if (IsKeyDown(KeyboardKey.KEY_S))
+            {
+                Vector3 facing = new Vector3(
+               tankObject.LocalTransform.m1,
+               tankObject.LocalTransform.m2, 1) * deltaTime * -playerSpeed;
+                tankObject.Translate(facing.x, facing.y);
+            }
+            if (IsKeyDown(KeyboardKey.KEY_Q))
+            {
+                turretObject.Rotate(-deltaTime);
+            }
+            if (IsKeyDown(KeyboardKey.KEY_E))
+            {
+                turretObject.Rotate(deltaTime);
+            }
+            tankObject.Update(deltaTime);
+
+            // END WITH THIS -----------------------------------------
             lastTime = currentTime;
+
+            // Debug
+            tankObject.GlobalTransform.PrintCels();
         }
 
         public void Draw()
