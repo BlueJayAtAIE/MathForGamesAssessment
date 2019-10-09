@@ -650,11 +650,11 @@ namespace MathFunctions
         // Translating ------------------------
         public void SetTranslation(float x, float y)
         {
-            m3 = x; m6 = y; m9 = 1;
+            m7 = x; m8 = y; m9 = 1;
         }
         public void Translate(float x, float y)
         {
-            m3 += x; m6 += y;
+            m7 += x; m8 += y;
         }
 
         // Multiplication
