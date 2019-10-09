@@ -22,7 +22,7 @@ namespace MatrixHierarchies
 
         public SpriteObject()
         {
-
+            // Purposefully Blank.
         }
 
         public void Load(string fileName)
@@ -31,12 +31,14 @@ namespace MatrixHierarchies
             texture = LoadTextureFromImage(img);
         }
 
+        // Overrides ---------------------------------------------------------
         public override void OnDraw()
         {
             // Pulls the rotation in radians and converts to degrees for use in Raylib's draw funtion.
             float rotation = (float)Math.Atan2(globalTransform.m2, globalTransform.m1);
 
-            DrawTextureEx(texture, new Vector2(globalTransform.m7, globalTransform.m8), rotation * (float)(180.0f / Math.PI), 1, Color.WHITE);
+            DrawTextureEx(texture, new Vector2(globalTransform.m3, globalTransform.m6), 0, 1, Color.WHITE);
+            // rotation * (float)(180.0f / Math.PI)
         }
     }
 }
