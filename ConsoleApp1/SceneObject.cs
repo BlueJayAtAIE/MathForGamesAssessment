@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using MathFunctions;
 
@@ -16,7 +14,7 @@ namespace MatrixHierarchies
 
         public SceneObject()
         {
-
+            // Purposefully Blank.
         }
 
         ~SceneObject()

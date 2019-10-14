@@ -15,19 +15,25 @@ namespace MatrixHierarchies
             string flavor()
             {
                 string result = "";
-                switch (rng.Next(1, 4))
+                switch (rng.Next(1, 6))
                 {
                     case 1:
                         result = "Are you actually reading the window name?";
                         break;
                     case 2:
-                        result = "This took like a minute to do.";
+                        result = "This seems a little silly to do.";
                         break;
                     case 3:
                         result = "I may be wasting my time, but at least I'm amused.";
                         break;
+                    case 4:
+                        result = "Change two numbers to win.";
+                        break;
+                    case 5:
+                        result = "Raylib: Now with more Vectors!";
+                        break;
                     default:
-                        result = "Blank Text.";
+                        result = "Tanks for N o t h i n g";
                         break;
                 }
                 return result;

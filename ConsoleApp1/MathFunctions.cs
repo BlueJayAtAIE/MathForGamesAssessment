@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using rl = Raylib;
 
 namespace MathFunctions
 {
@@ -112,6 +111,15 @@ namespace MathFunctions
         public void PrintMagnitude(string name)
         {
             Console.WriteLine($"Hello, I am Vector2 {name}. My magnitude is {Magnitude()}");
+        }
+
+        // Conversions
+        public rl.Vector2 ConvertedToRaylibV2()
+        {
+            rl.Vector2 tmp = new rl.Vector2();
+            tmp.x = x;
+            tmp.y = y;
+            return tmp;
         }
 
         // Addition
