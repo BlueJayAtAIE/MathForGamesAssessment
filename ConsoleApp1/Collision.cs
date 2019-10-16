@@ -92,4 +92,89 @@ namespace MathFunctions
             return corners;
         }
     }
+
+    class Sphere
+    {
+        Vector3 center;
+        float radius;
+
+        public Sphere()
+        {
+            // Purposefully Blank.
+        }
+
+        public Sphere(Vector3 p, float r)
+        {
+            center = p;
+            radius = r;
+        }
+
+        public void Fit(Vector3[] points)
+        {
+            Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                min = Vector3.Min(min, points[i]);
+                max = Vector3.Max(max, points[i]);
+            }
+
+            center = (min + max) * 0.5f;
+            radius = center.Distance(max);
+        }
+
+        public void Fit(List<Vector3> points)
+        {
+            Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+            foreach (Vector3 p in points)
+            {
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            }
+
+            center = (min + max) * 0.5f;
+            radius = center.Distance(max);
+        }
+
+        // TODO: Another method of fitting a Sphere to a collection of points is to first find the average position within
+        // the collection and set it to the Sphere’s center, then set the radius to the distance between the
+        // center and the point farthest from the center.This method requires looping through the points multiple times.
+        // Try and implement this second method yourself.
+
+        // Collision Checks --------------------
+        public bool Overlaps(Vector3 p)
+        {
+            Vector3 toPoint = p - center;
+            return toPoint.MagnitudeSqr() <= (radius * radius);
+        }
+
+        public bool Overlaps(Sphere otherCollider)
+        {
+            Vector3 diff = otherCollider.center - center;
+            float r = radius + otherCollider.radius;
+            return diff.MagnitudeSqr() <= (r * r);
+        }
+
+        public bool Overlaps(AABB aabb)
+        {
+            Vector3 diff = aabb.ClosestPoint(center) - center;
+            return diff.DotProduct(diff) <= (radius * radius);
+        }
+
+        Vector3 ClosestPoint(Vector3 p)
+        {
+            // Distance from the center.
+            Vector3 toPoint = p - center;
+
+            // If outside the radius, bring it back to the radius.
+            if (toPoint.MagnitudeSqr() > (radius * radius))
+            {
+                toPoint = toPoint.GetNormalized() * radius;
+            }
+            return center + toPoint;
+        }
+    }
 }

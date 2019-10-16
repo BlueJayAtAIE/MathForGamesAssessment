@@ -12,9 +12,12 @@ namespace MatrixHierarchies
         private float timer = 0;
         private int fps = 1;
         private int frames;
+        private float debugTimer = 0;
 
         private float deltaTime;
         private float playerSpeed = 100f;
+
+        List<SceneObject> Hierarchy = new List<SceneObject>();
 
         SceneObject tankObject = new SceneObject();
         SceneObject turretObject = new SceneObject();
@@ -27,6 +30,8 @@ namespace MatrixHierarchies
 
         public void Init()
         {
+            Hierarchy.Add(tankObject);
+
             tankSprite.Load("tankBlue_outline.png");
             // Sprite is facing the wrong way... fix that here.
             tankSprite.SetRotate(-90 * (float)(Math.PI / 180.0f));
@@ -38,7 +43,6 @@ namespace MatrixHierarchies
             // Set the turret offset from the tank base.
             turretSprite.SetPosition(0, turretSprite.Width / 2.0f);
 
-            // Scene object hierarchy ---------------
             turretObject.AddChild(turretSprite);
             tankObject.AddChild(tankSprite);
             tankObject.AddChild(turretObject);
@@ -92,12 +96,23 @@ namespace MatrixHierarchies
             {
                 turretObject.Rotate(deltaTime);
             }
-            tankObject.Update(deltaTime);
+            if (IsKeyPressed(KeyboardKey.KEY_SPACE))
+            {
+                Hierarchy.Add(new Projectile(turretObject.LocalTransform.m4, turretObject.LocalTransform.m5));
+                // TODO: This is going to need a lot of testing bc I dont know what I'm doing :ok_hand:
+            }
 
-
+            foreach (SceneObject s in Hierarchy)
+            {
+                s.Update(deltaTime);
+            }
 
             // Debug - KEEP COMMENTED UNLESS TESTING ----------------
-            //tankObject.GlobalTransform.PrintCels();
+            //debugTimer++;
+            //if (debugTimer % 5000 == 0)
+            //{
+            //    turretObject.LocalTransform.PrintCels();
+            //}
         }
 
         public void Draw()
@@ -109,7 +124,10 @@ namespace MatrixHierarchies
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
-            tankObject.Draw();
+            foreach (SceneObject s in Hierarchy)
+            {
+                s.Draw();
+            }
 
             EndDrawing();
         }

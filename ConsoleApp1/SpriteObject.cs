@@ -42,4 +42,41 @@ namespace MatrixHierarchies
             DrawTextureEx(texture, drawTransform.ConvertedToRaylibV2(), rotation * (float)(180.0f / Math.PI), 1, Color.WHITE);
         }
     }
+
+    class Projectile : SpriteObject
+    {
+        private float lifetime = 5000f;
+        private float speed = 4f;
+        public bool removeMe = false;
+        private MathFunctions.Vector3 direction;
+
+        public Projectile(MathFunctions.Vector3 dir)
+        {
+            direction = dir;
+        }
+
+        public Projectile(float xDir, float yDir)
+        {
+            direction.x = xDir;
+            direction.y = yDir;
+        }
+
+        public override void OnUpdate(float deltaTime)
+        {
+            lifetime--;
+            if (lifetime <= 0)
+            {
+                removeMe = true;
+                // TODO: Back in Game, yeet this out of the hierarchy when removeMe is true.
+            }
+
+            MathFunctions.Vector3 facing = new MathFunctions.Vector3(direction.x, direction.y, 1) * deltaTime * speed;
+            Translate(facing.x, facing.y);
+        }
+
+        public override void OnDraw()
+        {
+            DrawCircle((int)direction.x, (int)direction.y, 6, Color.GOLD);
+        }
+    }
 }
