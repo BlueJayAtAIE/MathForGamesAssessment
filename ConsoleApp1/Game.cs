@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Raylib;
 using static Raylib.Raylib;
 
@@ -12,7 +13,7 @@ namespace MatrixHierarchies
         private int fps = 1;
         private int frames;
 
-        private float deltaTime = 0.005f;
+        private float deltaTime;
         private float playerSpeed = 100f;
 
         SceneObject tankObject = new SceneObject();
@@ -20,6 +21,9 @@ namespace MatrixHierarchies
 
         SpriteObject tankSprite = new SpriteObject();
         SpriteObject turretSprite = new SpriteObject();
+
+        Color boxColor = Color.GREEN;
+        MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 80, 0), new MathFunctions.Vector3(200, 120, 0));
 
         public void Init()
         {
@@ -91,6 +95,7 @@ namespace MatrixHierarchies
             tankObject.Update(deltaTime);
 
 
+
             // Debug - KEEP COMMENTED UNLESS TESTING ----------------
             //tankObject.GlobalTransform.PrintCels();
         }
@@ -101,6 +106,8 @@ namespace MatrixHierarchies
 
             ClearBackground(Color.WHITE);
             DrawText($"FPS: {fps.ToString()}", 10, 10, 12, Color.RED);
+
+            DrawRectangle(120, 120, 80, 80, boxColor);
 
             tankObject.Draw();
 
