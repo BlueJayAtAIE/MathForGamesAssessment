@@ -12,6 +12,8 @@ namespace MatrixHierarchies
         protected Matrix3 localTransform = Matrix3.identity;
         protected Matrix3 globalTransform = Matrix3.identity;
 
+        public bool removeMe = false;
+
         public SceneObject()
         {
             // Purposefully Blank.

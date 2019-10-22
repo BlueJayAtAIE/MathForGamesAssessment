@@ -5,8 +5,8 @@ namespace MathFunctions
 {
     class AABB
     {
-        Vector3 min = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
-        Vector3 max = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        public Vector3 min = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        public Vector3 max = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
 
         public AABB()
         {
@@ -14,6 +14,12 @@ namespace MathFunctions
         }
 
         public AABB(Vector3 min, Vector3 max)
+        {
+            this.min = min;
+            this.max = max;
+        }
+
+        public void Resize(Vector3 min, Vector3 max)
         {
             this.min = min;
             this.max = max;
@@ -55,7 +61,7 @@ namespace MathFunctions
 
         // Collision Checks --------------------
 
-        // It's faster to check if they DONT collide since it'll excit the check sooner.
+        // It's faster to check if they DONT collide since it'll exit the check sooner.
         public bool Overlaps(Vector3 p)
         {
             return !(p.x < min.x || p.y < min.y || p.x > max.x || p.y > max.y);
@@ -63,7 +69,7 @@ namespace MathFunctions
 
         public bool Overlaps(AABB otherCollider)
         {
-            return !(max.x < otherCollider.min.x || max.y < otherCollider.min.y ||min.x > otherCollider.max.x || min.y > otherCollider.max.y);
+            return !(max.x < otherCollider.min.x || max.y < otherCollider.min.y || min.x > otherCollider.max.x || min.y > otherCollider.max.y);
         }
 
         public Vector3 ClosestPoint(Vector3 p)
@@ -84,19 +90,15 @@ namespace MathFunctions
 
         public List<Vector3> Corners()
         {
-            List<Vector3> corners = new List<Vector3>(4);
-            corners[0] = min;
-            corners[1] = new Vector3(min.x, max.y, min.z);
-            corners[2] = max;
-            corners[3] = new Vector3(max.x, min.y, max.z);
-            return corners;
+            List<Vector3> temp = new List<Vector3>(4) { min, new Vector3(min.x, max.y, min.z), max, new Vector3(max.x, min.y, max.z) };
+            return temp;
         }
     }
 
     class Sphere
     {
-        Vector3 center;
-        float radius;
+        public Vector3 center;
+        public float radius;
 
         public Sphere()
         {
@@ -175,6 +177,71 @@ namespace MathFunctions
                 toPoint = toPoint.GetNormalized() * radius;
             }
             return center + toPoint;
+        }
+    }
+
+    class Ray
+    {
+        Vector3 origin;
+        Vector3 direction;
+        float length;
+
+        public Ray()
+        {
+            // Purposefully blank.
+        }
+
+        public Ray(Vector3 start, Vector3 direction, float length = float.MaxValue)
+        {
+            origin = start;
+            this.direction = direction;
+            this.length = length;
+        }
+
+        float Clamp(float t, float a, float b)
+        {
+            return Math.Max(a, Math.Min(b, t));
+        }
+
+        public Vector3 closestPoint(Vector3 point)
+        {
+            // Ray origin to arbirary point.
+            Vector3 p = point - origin;
+
+            // Project the point onto the ray and clamp by length.
+            float t = Clamp(p.DotProduct(direction), 0, length);
+
+            // Return position in direction of the ray.
+            return origin + direction * t;
+        }
+
+        public bool Intersects(Sphere sphere, Vector3 I = null)
+        {
+            // Ray origin to Sphere center.
+            Vector3 L = sphere.center - origin;
+
+            // Project Sphere onto Ray.
+            float t = L.DotProduct(direction);
+
+            // Get Sqr Distance from Sphere center to Ray.
+            float dd = L.DotProduct(L) - t * t;
+
+            // Subtract penetration amount from projected distance.
+            t -= (float)Math.Sqrt(sphere.radius * sphere.radius - dd);
+
+            // It intersects if within Ray length.
+            if (t >= 0 && t <= length)
+            {
+                // Store intersection point if requested.
+                if (I != null)
+                {
+                    I = origin + direction * t;
+                }
+                return true;
+            }
+
+            // Defalt; no intersection.
+            return false;
         }
     }
 }

@@ -45,10 +45,10 @@ namespace MatrixHierarchies
 
     class Projectile : SpriteObject
     {
-        private float lifetime = 5000f;
+        private float lifetime = 4f;
         private float speed = 4f;
-        public bool removeMe = false;
         private MathFunctions.Vector3 direction;
+        //TODO: GIVE EACH PROJECTILE A SPHERE COLLIDER THAT UPDATES IT'S POSITION WHEN MOVED
 
         public Projectile(MathFunctions.Vector3 dir)
         {
@@ -63,11 +63,10 @@ namespace MatrixHierarchies
 
         public override void OnUpdate(float deltaTime)
         {
-            lifetime--;
+            lifetime -= 1 * deltaTime;
             if (lifetime <= 0)
             {
                 removeMe = true;
-                // TODO: Back in Game, yeet this out of the hierarchy when removeMe is true.
             }
 
             MathFunctions.Vector3 facing = new MathFunctions.Vector3(direction.x, direction.y, 1) * deltaTime * speed;
