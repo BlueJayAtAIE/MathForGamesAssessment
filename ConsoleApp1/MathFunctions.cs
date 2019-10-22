@@ -116,7 +116,7 @@ namespace MathFunctions
         // Conversions
         public rl.Vector2 ConvertedToRaylibV2()
         {
-            rl.Vector2 tmp = new rl.Vector2();
+            rl.Vector2 tmp;
             tmp.x = x;
             tmp.y = y;
             return tmp;
@@ -163,7 +163,7 @@ namespace MathFunctions
 
     // ------------------------------------------------------------------------------------------
     // VECTOR3 ----------------------------------------------------------------------------------
-    public struct Vector3
+    public class Vector3
     {
         public float x, y, z;
 

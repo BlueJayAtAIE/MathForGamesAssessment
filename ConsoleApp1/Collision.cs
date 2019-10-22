@@ -203,7 +203,7 @@ namespace MathFunctions
             return Math.Max(a, Math.Min(b, t));
         }
 
-        public Vector3 closestPoint(Vector3 point)
+        public Vector3 ClosestPoint(Vector3 point)
         {
             // Ray origin to arbirary point.
             Vector3 p = point - origin;
