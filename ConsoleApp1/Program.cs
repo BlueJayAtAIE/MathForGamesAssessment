@@ -15,7 +15,7 @@ namespace MatrixHierarchies
             string flavor()
             {
                 string result = "";
-                switch (rng.Next(1, 6))
+                switch (rng.Next(1, 7))
                 {
                     case 1:
                         result = "Are you actually reading the window name?";
@@ -27,10 +27,13 @@ namespace MatrixHierarchies
                         result = "I may be wasting my time, but at least I'm amused.";
                         break;
                     case 4:
-                        result = "Change two numbers to win.";
+                        result = "Programming: change two numbers to do something completely different.";
                         break;
                     case 5:
                         result = "Raylib: Now with more Vectors!";
+                        break;
+                    case 6:
+                        result = "Collisions everywhere!";
                         break;
                     default:
                         result = "Tanks for N o t h i n g";
@@ -39,9 +42,13 @@ namespace MatrixHierarchies
                 return result;
             }
 
+            Console.ForegroundColor = ConsoleColor.Cyan;
+
             InitWindow(640, 480, flavor());
 
             game.Init();
+
+            SetTargetFPS(60);
 
             while (!WindowShouldClose())
             {

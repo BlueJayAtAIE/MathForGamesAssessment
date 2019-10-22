@@ -111,6 +111,12 @@ namespace MathFunctions
             radius = r;
         }
 
+        public void Resize(Vector3 center, float radius)
+        {
+            this.center = center;
+            this.radius = radius;
+        }
+
         public void Fit(Vector3[] points)
         {
             Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
@@ -241,6 +247,55 @@ namespace MathFunctions
             }
 
             // Defalt; no intersection.
+            return false;
+        }
+
+        public bool Interects(AABB aabb, Vector3 I = null)
+        {
+            float xmin, xmax, ymin, ymax;
+
+            if (direction.x < 0)
+            {
+                // If ray's direction is negitive, this will run.
+                xmin = (aabb.max.x - origin.x) / direction.x;
+                xmax = (aabb.min.x - origin.x) / direction.x;
+            }
+            else
+            {
+                xmin = (aabb.min.x - origin.x) / direction.x;
+                xmax = (aabb.max.x - origin.x) / direction.x;
+            }
+
+            if (direction.y < 0)
+            {
+                // If ray's direction is negitive, this will run.
+                ymin = (aabb.max.y - origin.y) / direction.y;
+                ymax = (aabb.min.y - origin.y) / direction.y;
+            }
+            else
+            {
+                ymin = (aabb.min.y - origin.y) / direction.y;
+                ymax = (aabb.max.y - origin.y) / direction.y;
+            }
+
+            // Completely encompased by box.
+            if (xmin > ymax || ymin > xmax) return false;
+
+            // First conteact is larger of two min.
+            float t = Math.Max(xmin, ymin);
+
+            // Intersects if within range.
+            if (t >= 0 && t <= length)
+            {
+                // Store intersection point is needed.
+                if (I != null)
+                {
+                    I = origin + direction * t;
+                }
+                return true;
+            }
+
+            // Not within range.
             return false;
         }
     }

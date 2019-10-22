@@ -19,23 +19,26 @@ namespace MatrixHierarchies
 
         List<SceneObject> Hierarchy = new List<SceneObject>();
 
+        SceneObject projectileHolder = new SceneObject();
+
         SceneObject tankObject = new SceneObject();
         SceneObject turretObject = new SceneObject();
 
         SpriteObject tankSprite = new SpriteObject();
         SpriteObject turretSprite = new SpriteObject();
 
-        MathFunctions.AABB playerCollider = new MathFunctions.AABB();
+        MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
+        SceneObject[] playerCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject()};
+        MathFunctions.Vector3[] pCornersArray = new MathFunctions.Vector3[4];
 
         Color boxColor = Color.GREEN;
         MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 120, 0), new MathFunctions.Vector3(200, 200, 0));
 
-        float textColorF = 1.0f;
+        public float rainbowColorF = 1.0f;
 
         public void Init()
         {
-            SetTargetFPS(60);
-
+            Hierarchy.Add(projectileHolder);
             Hierarchy.Add(tankObject);
 
             tankSprite.Load("tankBlue_outline.png");
@@ -49,14 +52,24 @@ namespace MatrixHierarchies
             // Set the turret offset from the tank base.
             turretSprite.SetPosition(0, turretSprite.Width / 2.0f);
 
+            // Min.
+            playerCornerPoints[0].SetPosition(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2));
+            // Max.
+            playerCornerPoints[1].SetPosition(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2));
+            // Other two corners.
+            playerCornerPoints[2].SetPosition(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2));
+            playerCornerPoints[3].SetPosition(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2));
 
             turretObject.AddChild(turretSprite);
             tankObject.AddChild(tankSprite);
             tankObject.AddChild(turretObject);
+            for (int i = 0; i < playerCornerPoints.Length; i++)
+            {
+                tankObject.AddChild(playerCornerPoints[i]);
+            }
 
+            // Final placement of the Tank.
             tankObject.SetPosition(GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f);
-            
-            //tankObject.SetPosition(0, 0);
         }
 
         public void Shutdown()
@@ -66,7 +79,7 @@ namespace MatrixHierarchies
 
         public void Update()
         {
-            // Time Calculations CALL ONLY ONCE PER UPDATE ----------
+            #region Time Calculations
             deltaTime = gameTime.GetDeltaTime();
 
             timer += deltaTime;
@@ -78,10 +91,11 @@ namespace MatrixHierarchies
             }
             frames++;
 
-            textColorF++;
-            if (textColorF <= 0 || textColorF >= 350) textColorF = 0;
+            rainbowColorF++;
+            if (rainbowColorF <= 0 || rainbowColorF >= 360) rainbowColorF = 0;
+            #endregion
 
-            // PLAYER MOVEMENT --------------------------------------
+            #region Player Input
             if (IsKeyDown(KeyboardKey.KEY_A))
             {
                 tankObject.Rotate(-deltaTime);
@@ -110,23 +124,42 @@ namespace MatrixHierarchies
             }
             if (IsKeyPressed(KeyboardKey.KEY_SPACE))
             {
-                Hierarchy.Add(new Projectile(turretObject.GlobalTransform.m4, turretObject.GlobalTransform.m5));
-                // TODO: This is going to need a lot of testing bc I dont know what I'm doing :ok_hand:
+                Projectile temp = new Projectile(turretObject.GlobalTransform.m5, -turretObject.GlobalTransform.m4);
+                temp.SetPosition(turretObject.GlobalTransform.m7, turretObject.GlobalTransform.m8);
+                projectileHolder.AddChild(temp);
             }
+            #endregion
 
+            #region Collision Box Updates
+            // For a static AABB.
             playerCollider.Resize(new MathFunctions.Vector3(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2), 0),
                                   new MathFunctions.Vector3(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2), 0));
 
-            // Check to see if the item acually needs to be deleted
-            for (int i = 0; i < Hierarchy.Count; i++)
+            // For an AABB that resizes during transforms.
+            //for (int i = 0; i < playerCornerPoints.Length; i++)
+            //{
+            //    pCornersArray[i] = new MathFunctions.Vector3(playerCornerPoints[i].GlobalTransform.m7, playerCornerPoints[i].GlobalTransform.m8, 0);
+            //}
+            //playerCollider.Fit(pCornersArray);
+            #endregion
+
+            #region Projectiles
+            // Change projectile holder to match turret transform. NOTE THIS SPAWNS IT FROM THE CENTER OF THE TANK.
+            // Logic problem: with the container updating to the transform of the tank all the time, the bullets basically also become children of the tank.
+            // Try moving while shooting if you forget what I mean...
+            //projectileHolder.SetPosition(turretObject.GlobalTransform.m7, turretObject.GlobalTransform.m8);
+
+            // Check to see if the projectile acually needs to be deleted
+            for (int i = 0; i < projectileHolder.GetChildCount(); i++)
             {
-                if (Hierarchy[i].removeMe)
+                if (projectileHolder.GetChild(i).removeMe)
                 {
-                    Hierarchy.Remove(Hierarchy[i]);
+                    projectileHolder.RemoveChild(projectileHolder.GetChild(i));
                 }
             }
+            #endregion
 
-            // Collision Demo
+            #region Collision Demo
             if (boxCollider.Overlaps(playerCollider))
             {
                 boxColor = Color.RED;
@@ -136,36 +169,58 @@ namespace MatrixHierarchies
                 boxColor = Color.GREEN;
             }
 
+            for (int i = 0; i < projectileHolder.GetChildCount(); i++)
+            {
+                Projectile temp = (Projectile)projectileHolder.GetChild(i);
+
+                if (!boxCollider.Overlaps(playerCollider))
+                {
+                    if (temp.projectileCollider.Overlaps(boxCollider))
+                    {
+                        boxColor = Color.RED;
+                        break;
+                    }
+                    else
+                    {
+                        boxColor = Color.GREEN;
+                    }
+                }
+            }
+            #endregion
+
             // Update
             foreach (SceneObject s in Hierarchy)
             {
                 s.Update(deltaTime);
             }
 
-            // Debug - KEEP COMMENTED UNLESS TESTING ----------------
+            #region Debug - KEEP COMMENTED UNLESS TESTING
             //debugTimer++;
-            //if (debugTimer % 5000 == 0)
+            //if (debugTimer % 200 == 0)
             //{
-            //    turretObject.LocalTransform.PrintCels();
+            //    turretObject.GlobalTransform.PrintCels();
             //}
             //Console.WriteLine($"OtherCollider dets ={playerCollider.min.x}, {playerCollider.min.y} {playerCollider.max.x}, {playerCollider.max.y}");
             //Console.WriteLine($"BoxCollider dets ={boxCollider.min.x}, {boxCollider.min.y} {boxCollider.max.x}, {boxCollider.max.y}");
+            #endregion
         }
 
         public void Draw()
         {
             BeginDrawing();
 
-            ClearBackground(Color.WHITE);
-            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, ColorFromHSV(new Vector3(textColorF, 1, 1)));
+            ClearBackground(Color.RAYWHITE);
+            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, ColorFromHSV(new Vector3(rainbowColorF, 1, 1)));
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
+            // DEBUG: Draw player Hitbox corners.
             DrawCircle((int)playerCollider.Corners()[0].x, (int)playerCollider.Corners()[0].y, 6, Color.PURPLE);
             DrawCircle((int)playerCollider.Corners()[1].x, (int)playerCollider.Corners()[1].y, 6, Color.PURPLE);
             DrawCircle((int)playerCollider.Corners()[2].x, (int)playerCollider.Corners()[2].y, 6, Color.DARKPURPLE);
             DrawCircle((int)playerCollider.Corners()[3].x, (int)playerCollider.Corners()[3].y, 6, Color.DARKPURPLE);
 
+            // DEBUG: Draw green/red box's Hitbox corners.
             DrawCircle((int)boxCollider.Corners()[0].x, (int)boxCollider.Corners()[0].y, 6, Color.BLUE);
             DrawCircle((int)boxCollider.Corners()[1].x, (int)boxCollider.Corners()[1].y, 6, Color.BLUE);
             DrawCircle((int)boxCollider.Corners()[2].x, (int)boxCollider.Corners()[2].y, 6, Color.DARKBLUE);

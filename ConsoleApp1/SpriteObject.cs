@@ -46,9 +46,9 @@ namespace MatrixHierarchies
     class Projectile : SpriteObject
     {
         private float lifetime = 4f;
-        private float speed = 4f;
-        private MathFunctions.Vector3 direction;
-        //TODO: GIVE EACH PROJECTILE A SPHERE COLLIDER THAT UPDATES IT'S POSITION WHEN MOVED
+        private float speed = 100f;
+        private MathFunctions.Vector3 direction = new MathFunctions.Vector3(0, 0, 0);
+        public MathFunctions.Sphere projectileCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 0), 0);
 
         public Projectile(MathFunctions.Vector3 dir)
         {
@@ -69,13 +69,15 @@ namespace MatrixHierarchies
                 removeMe = true;
             }
 
+            projectileCollider.Resize(new MathFunctions.Vector3(GlobalTransform.m7, GlobalTransform.m8, 0), 6);
+
             MathFunctions.Vector3 facing = new MathFunctions.Vector3(direction.x, direction.y, 1) * deltaTime * speed;
             Translate(facing.x, facing.y);
         }
 
         public override void OnDraw()
         {
-            DrawCircle((int)direction.x, (int)direction.y, 6, Color.GOLD);
+            DrawCircle((int)projectileCollider.center.x, (int)projectileCollider.center.y, (int)projectileCollider.radius, Color.ORANGE);
         }
     }
 }
