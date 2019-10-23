@@ -15,7 +15,7 @@ namespace MatrixHierarchies
             string flavor()
             {
                 string result = "";
-                switch (rng.Next(1, 7))
+                switch (rng.Next(1, 8))
                 {
                     case 1:
                         result = "Are you actually reading the window name?";
@@ -35,8 +35,11 @@ namespace MatrixHierarchies
                     case 6:
                         result = "Collisions everywhere!";
                         break;
+                    case 7:
+                        result = "So much content!";
+                        break;
                     default:
-                        result = "Tanks for N o t h i n g";
+                        result = "Tanks for N o t h i n g.";
                         break;
                 }
                 return result;
@@ -45,10 +48,9 @@ namespace MatrixHierarchies
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             InitWindow(640, 480, flavor());
+            SetTargetFPS(60);
 
             game.Init();
-
-            SetTargetFPS(60);
 
             while (!WindowShouldClose())
             {

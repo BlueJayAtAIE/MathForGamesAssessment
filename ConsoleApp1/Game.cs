@@ -17,6 +17,9 @@ namespace MatrixHierarchies
         private float deltaTime;
         private float playerSpeed = 100f;
 
+        // false = static hitbox, true = resizing hitbox.
+        bool collisionToggle = false;
+
         List<SceneObject> Hierarchy = new List<SceneObject>();
 
         SceneObject projectileHolder = new SceneObject();
@@ -71,6 +74,24 @@ namespace MatrixHierarchies
 
             // Final placement of the Tank.
             tankObject.SetPosition(GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f);
+
+            #region Printing Controls
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("\n===============================================================================");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("                          CONTROLS                                             ");
+            Console.WriteLine("                 W - Forwards                                                  ");
+            Console.WriteLine("                 S - Backwards                                                 ");
+            Console.WriteLine("                 A - Rotate Left                                               ");
+            Console.WriteLine("                 D - Rotate Right                                              ");
+            Console.WriteLine("                 Q - Rotate Barrel Left                                        ");
+            Console.WriteLine("                 E - Rotate Barrel Right                                       ");
+            Console.WriteLine("                 Spacebar - Fire Projectile                                    ");
+            Console.WriteLine("                 P - (Debug) Change Collider Logic                             ");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("===============================================================================");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            #endregion
         }
 
         public void Shutdown()
@@ -127,22 +148,31 @@ namespace MatrixHierarchies
             if (IsKeyPressed(KeyboardKey.KEY_SPACE))
             {
                 Projectile temp = new Projectile(turretObject.GlobalTransform.m5, -turretObject.GlobalTransform.m4);
-                temp.SetPosition(turretObject.GlobalTransform.m7, turretObject.GlobalTransform.m8);
+                temp.SetPosition(turretObject.GlobalTransform.m7 + (turretObject.GlobalTransform.m5 * 30), turretObject.GlobalTransform.m8 + (-turretObject.GlobalTransform.m4 * 30));
                 projectileHolder.AddChild(temp);
+            }
+            if (IsKeyPressed(KeyboardKey.KEY_P))
+            {
+                collisionToggle = !collisionToggle;
             }
             #endregion
 
             #region Collision Box Updates
-            // For a static AABB. 
-            playerCollider.Resize(new MathFunctions.Vector3(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2), 0),
-                                  new MathFunctions.Vector3(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2), 0));
-
-            // For an AABB that resizes during transforms.
-            //for (int i = 0; i < playerCornerPoints.Length; i++)
-            //{
-            //    pCornersArray[i] = new MathFunctions.Vector3(playerCornerPoints[i].GlobalTransform.m7, playerCornerPoints[i].GlobalTransform.m8, 0);
-            //}
-            //playerCollider.Fit(pCornersArray);
+            if (collisionToggle)
+            {
+                // For an AABB that resizes during transforms.
+                for (int i = 0; i < playerCornerPoints.Length; i++)
+                {
+                    pCornersArray[i] = new MathFunctions.Vector3(playerCornerPoints[i].GlobalTransform.m7, playerCornerPoints[i].GlobalTransform.m8, 0);
+                }
+                playerCollider.Fit(pCornersArray);
+            }
+            else
+            {
+                // For a static AABB. 
+                playerCollider.Resize(new MathFunctions.Vector3(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2), 0),
+                                      new MathFunctions.Vector3(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2), 0));
+            }
             #endregion
 
             #region Projectiles
@@ -207,7 +237,6 @@ namespace MatrixHierarchies
             BeginDrawing();
 
             ClearBackground(Color.RAYWHITE);
-            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
@@ -226,6 +255,17 @@ namespace MatrixHierarchies
             foreach (SceneObject s in Hierarchy)
             {
                 s.Draw();
+            }
+
+            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
+            DrawText("Press P to toggle hitbox logic.", 350, 460, 12, Color.GRAY);
+            if (collisionToggle)
+            {
+                DrawText("Transforming", 540, 460, 12, rainbow);
+            }
+            else
+            {
+                DrawText("Static", 540, 460, 12, rainbow);
             }
 
             EndDrawing();
