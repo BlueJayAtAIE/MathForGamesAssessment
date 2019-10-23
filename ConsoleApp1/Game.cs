@@ -228,7 +228,12 @@ namespace MatrixHierarchies
             {
                 Projectile temp = (Projectile)projectileHolder.GetChild(i);
 
-                if(temp.projectileCollider.Overlaps(target.targetCollider))
+                if (temp.projectileCollider.Overlaps(solidCollider))
+                {
+                    projectileHolder.RemoveChild(temp);
+                }
+
+                if (temp.projectileCollider.Overlaps(target.targetCollider))
                 {
                     target.Respawn();
                     score++;
