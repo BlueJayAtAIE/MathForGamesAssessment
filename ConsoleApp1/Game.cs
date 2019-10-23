@@ -19,6 +19,7 @@ namespace MatrixHierarchies
 
         // false = static hitbox, true = resizing hitbox.
         bool collisionToggle = false;
+        bool showHitboxCorners = false;
 
         List<SceneObject> Hierarchy = new List<SceneObject>();
 
@@ -87,6 +88,7 @@ namespace MatrixHierarchies
             Console.WriteLine("                 Q - Rotate Barrel Left                                        ");
             Console.WriteLine("                 E - Rotate Barrel Right                                       ");
             Console.WriteLine("                 Spacebar - Fire Projectile                                    ");
+            Console.WriteLine("                 O - (Debug) Show Hitbox Corners                               ");
             Console.WriteLine("                 P - (Debug) Change Collider Logic                             ");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("===============================================================================");
@@ -154,6 +156,10 @@ namespace MatrixHierarchies
             if (IsKeyPressed(KeyboardKey.KEY_P))
             {
                 collisionToggle = !collisionToggle;
+            }
+            if (IsKeyPressed(KeyboardKey.KEY_O))
+            {
+                showHitboxCorners = !showHitboxCorners;
             }
             #endregion
 
@@ -240,17 +246,21 @@ namespace MatrixHierarchies
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
-            // DEBUG: Draw player Hitbox corners.
-            DrawCircle((int)playerCollider.Corners()[0].x, (int)playerCollider.Corners()[0].y, 6, Color.PURPLE);
-            DrawCircle((int)playerCollider.Corners()[1].x, (int)playerCollider.Corners()[1].y, 6, Color.DARKPURPLE);
-            DrawCircle((int)playerCollider.Corners()[2].x, (int)playerCollider.Corners()[2].y, 6, Color.PURPLE);
-            DrawCircle((int)playerCollider.Corners()[3].x, (int)playerCollider.Corners()[3].y, 6, Color.DARKPURPLE);
+            if (showHitboxCorners)
+            {
+                // DEBUG: Draw player Hitbox corners.
+                DrawCircle((int)playerCollider.Corners()[0].x, (int)playerCollider.Corners()[0].y, 6, Color.PURPLE);
+                DrawCircle((int)playerCollider.Corners()[1].x, (int)playerCollider.Corners()[1].y, 6, Color.DARKPURPLE);
+                DrawCircle((int)playerCollider.Corners()[2].x, (int)playerCollider.Corners()[2].y, 6, Color.PURPLE);
+                DrawCircle((int)playerCollider.Corners()[3].x, (int)playerCollider.Corners()[3].y, 6, Color.DARKPURPLE);
 
-            // DEBUG: Draw green/red box's Hitbox corners.
-            DrawCircle((int)boxCollider.Corners()[0].x, (int)boxCollider.Corners()[0].y, 6, Color.BLUE);
-            DrawCircle((int)boxCollider.Corners()[1].x, (int)boxCollider.Corners()[1].y, 6, Color.DARKBLUE);
-            DrawCircle((int)boxCollider.Corners()[2].x, (int)boxCollider.Corners()[2].y, 6, Color.BLUE);
-            DrawCircle((int)boxCollider.Corners()[3].x, (int)boxCollider.Corners()[3].y, 6, Color.DARKBLUE);
+                // DEBUG: Draw green/red box's Hitbox corners.
+                DrawCircle((int)boxCollider.Corners()[0].x, (int)boxCollider.Corners()[0].y, 6, Color.BLUE);
+                DrawCircle((int)boxCollider.Corners()[1].x, (int)boxCollider.Corners()[1].y, 6, Color.DARKBLUE);
+                DrawCircle((int)boxCollider.Corners()[2].x, (int)boxCollider.Corners()[2].y, 6, Color.BLUE);
+                DrawCircle((int)boxCollider.Corners()[3].x, (int)boxCollider.Corners()[3].y, 6, Color.DARKBLUE);
+            }
+            
 
             foreach (SceneObject s in Hierarchy)
             {
