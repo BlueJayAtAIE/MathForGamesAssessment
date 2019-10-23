@@ -35,6 +35,7 @@ namespace MatrixHierarchies
         MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 120, 0), new MathFunctions.Vector3(200, 200, 0));
 
         public float rainbowColorF = 1.0f;
+        public Color rainbow = new Color();
 
         public void Init()
         {
@@ -93,6 +94,7 @@ namespace MatrixHierarchies
 
             rainbowColorF++;
             if (rainbowColorF <= 0 || rainbowColorF >= 360) rainbowColorF = 0;
+            rainbow = ColorFromHSV(new Vector3(rainbowColorF, 1, 1));
             #endregion
 
             #region Player Input
@@ -131,7 +133,7 @@ namespace MatrixHierarchies
             #endregion
 
             #region Collision Box Updates
-            // For a static AABB.
+            // For a static AABB. 
             playerCollider.Resize(new MathFunctions.Vector3(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2), 0),
                                   new MathFunctions.Vector3(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2), 0));
 
@@ -144,11 +146,6 @@ namespace MatrixHierarchies
             #endregion
 
             #region Projectiles
-            // Change projectile holder to match turret transform. NOTE THIS SPAWNS IT FROM THE CENTER OF THE TANK.
-            // Logic problem: with the container updating to the transform of the tank all the time, the bullets basically also become children of the tank.
-            // Try moving while shooting if you forget what I mean...
-            //projectileHolder.SetPosition(turretObject.GlobalTransform.m7, turretObject.GlobalTransform.m8);
-
             // Check to see if the projectile acually needs to be deleted
             for (int i = 0; i < projectileHolder.GetChildCount(); i++)
             {
@@ -210,20 +207,20 @@ namespace MatrixHierarchies
             BeginDrawing();
 
             ClearBackground(Color.RAYWHITE);
-            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, ColorFromHSV(new Vector3(rainbowColorF, 1, 1)));
+            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
             // DEBUG: Draw player Hitbox corners.
             DrawCircle((int)playerCollider.Corners()[0].x, (int)playerCollider.Corners()[0].y, 6, Color.PURPLE);
-            DrawCircle((int)playerCollider.Corners()[1].x, (int)playerCollider.Corners()[1].y, 6, Color.PURPLE);
-            DrawCircle((int)playerCollider.Corners()[2].x, (int)playerCollider.Corners()[2].y, 6, Color.DARKPURPLE);
+            DrawCircle((int)playerCollider.Corners()[1].x, (int)playerCollider.Corners()[1].y, 6, Color.DARKPURPLE);
+            DrawCircle((int)playerCollider.Corners()[2].x, (int)playerCollider.Corners()[2].y, 6, Color.PURPLE);
             DrawCircle((int)playerCollider.Corners()[3].x, (int)playerCollider.Corners()[3].y, 6, Color.DARKPURPLE);
 
             // DEBUG: Draw green/red box's Hitbox corners.
             DrawCircle((int)boxCollider.Corners()[0].x, (int)boxCollider.Corners()[0].y, 6, Color.BLUE);
-            DrawCircle((int)boxCollider.Corners()[1].x, (int)boxCollider.Corners()[1].y, 6, Color.BLUE);
-            DrawCircle((int)boxCollider.Corners()[2].x, (int)boxCollider.Corners()[2].y, 6, Color.DARKBLUE);
+            DrawCircle((int)boxCollider.Corners()[1].x, (int)boxCollider.Corners()[1].y, 6, Color.DARKBLUE);
+            DrawCircle((int)boxCollider.Corners()[2].x, (int)boxCollider.Corners()[2].y, 6, Color.BLUE);
             DrawCircle((int)boxCollider.Corners()[3].x, (int)boxCollider.Corners()[3].y, 6, Color.DARKBLUE);
 
             foreach (SceneObject s in Hierarchy)

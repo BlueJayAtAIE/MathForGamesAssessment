@@ -46,7 +46,7 @@ namespace MatrixHierarchies
     class Projectile : SpriteObject
     {
         private float lifetime = 4f;
-        private float speed = 100f;
+        private float speed = 300f;
         private MathFunctions.Vector3 direction = new MathFunctions.Vector3(0, 0, 0);
         public MathFunctions.Sphere projectileCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 0), 0);
 
