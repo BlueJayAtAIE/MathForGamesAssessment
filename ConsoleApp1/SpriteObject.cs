@@ -80,4 +80,41 @@ namespace MatrixHierarchies
             DrawCircle((int)projectileCollider.center.x, (int)projectileCollider.center.y, (int)projectileCollider.radius, Color.ORANGE);
         }
     }
+
+    class Target : SpriteObject
+    {
+        public MathFunctions.Sphere targetCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 15), 0);
+        private float spawnPoint;
+
+        public Target()
+        {
+            spawnPoint = MathFunctions.Tools.rng.Next(40, 600);
+            globalTransform.m7 = spawnPoint;
+            spawnPoint = MathFunctions.Tools.rng.Next(40, 440);
+            globalTransform.m8 = spawnPoint;
+        }
+
+        public void Respawn()
+        {
+            spawnPoint = MathFunctions.Tools.rng.Next(40, 600);
+            globalTransform.m7 = spawnPoint;
+            spawnPoint = MathFunctions.Tools.rng.Next(40, 440);
+            globalTransform.m8 = spawnPoint;
+        }
+
+        public override void OnUpdate(float deltaTime)
+        {
+            targetCollider.Resize(new MathFunctions.Vector3(GlobalTransform.m7, GlobalTransform.m8, 0), 15);
+        }
+
+        public override void OnDraw()
+        {
+            DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius + 1, Color.MAROON);
+            DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius, Color.RED);
+            DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 3, Color.WHITE);
+            DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 6, Color.RED);
+            DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 9, Color.WHITE);
+            DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 12, Color.RED);
+        }
+    }
 }

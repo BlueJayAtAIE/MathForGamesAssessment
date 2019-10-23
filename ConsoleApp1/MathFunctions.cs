@@ -3,6 +3,11 @@ using rl = Raylib;
 
 namespace MathFunctions
 {
+    class Tools
+    {
+        public static Random rng = new Random();
+    }
+
     // ------------------------------------------------------------------------------------------
     // VECTOR2 ----------------------------------------------------------------------------------
     public struct Vector2

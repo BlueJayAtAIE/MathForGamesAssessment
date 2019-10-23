@@ -11,11 +11,10 @@ namespace MatrixHierarchies
         {
             Game game = new Game();
 
-            Random rng = new Random();
             string flavor()
             {
                 string result = "";
-                switch (rng.Next(1, 8))
+                switch (MathFunctions.Tools.rng.Next(1, 8))
                 {
                     case 1:
                         result = "Are you actually reading the window name?";

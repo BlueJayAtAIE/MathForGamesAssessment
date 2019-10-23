@@ -21,6 +21,8 @@ namespace MatrixHierarchies
         bool collisionToggle = false;
         bool showHitboxCorners = false;
 
+        bool isCollidingWall = false;
+
         List<SceneObject> Hierarchy = new List<SceneObject>();
 
         SceneObject projectileHolder = new SceneObject();
@@ -31,12 +33,17 @@ namespace MatrixHierarchies
         SpriteObject tankSprite = new SpriteObject();
         SpriteObject turretSprite = new SpriteObject();
 
+        Target target = new Target();
+        int score = 0;
+
         MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
         SceneObject[] playerCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject()};
         MathFunctions.Vector3[] pCornersArray = new MathFunctions.Vector3[4];
 
         Color boxColor = Color.GREEN;
         MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 120, 0), new MathFunctions.Vector3(200, 200, 0));
+
+        MathFunctions.AABB solidCollider = new MathFunctions.AABB(new MathFunctions.Vector3(460, 260, 0), new MathFunctions.Vector3(500, 300, 0));
 
         public float rainbowColorF = 1.0f;
         public Color rainbow = new Color();
@@ -45,6 +52,7 @@ namespace MatrixHierarchies
         {
             Hierarchy.Add(projectileHolder);
             Hierarchy.Add(tankObject);
+            Hierarchy.Add(target);
 
             tankSprite.Load("tankBlue_outline.png");
             // Sprite is facing the wrong way... fix that here.
@@ -80,16 +88,20 @@ namespace MatrixHierarchies
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("\n===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("                          CONTROLS                                             ");
-            Console.WriteLine("                 W - Forwards                                                  ");
-            Console.WriteLine("                 S - Backwards                                                 ");
-            Console.WriteLine("                 A - Rotate Left                                               ");
-            Console.WriteLine("                 D - Rotate Right                                              ");
-            Console.WriteLine("                 Q - Rotate Barrel Left                                        ");
-            Console.WriteLine("                 E - Rotate Barrel Right                                       ");
-            Console.WriteLine("                 Spacebar - Fire Projectile                                    ");
-            Console.WriteLine("                 O - (Debug) Show Hitbox Corners                               ");
-            Console.WriteLine("                 P - (Debug) Change Collider Logic                             ");
+            Console.WriteLine("            CONTROLS                                             ");
+            Console.WriteLine("   W - Forwards                                                  ");
+            Console.WriteLine("   S - Backwards                                                 ");
+            Console.WriteLine("   A - Rotate Left                                               ");
+            Console.WriteLine("   D - Rotate Right                                              ");
+            Console.WriteLine("   Q - Rotate Barrel Left                                        ");
+            Console.WriteLine("   E - Rotate Barrel Right                                       ");
+            Console.WriteLine("   Spacebar - Fire Projectile                                    ");
+            Console.WriteLine("   O - (Debug) Show Hitbox Corners                               ");
+            Console.WriteLine("   P - (Debug) Change Collider Logic                             ");
+            Console.WriteLine("                                                                 ");
+            Console.WriteLine("   Shoot targets for points.                                                   ");
+            Console.WriteLine("   Green box interacts with player and bullets.                                ");
+            Console.WriteLine("   Purple box is a solid wall, preventing movement.                            ");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -121,20 +133,20 @@ namespace MatrixHierarchies
             #endregion
 
             #region Player Input
-            if (IsKeyDown(KeyboardKey.KEY_A))
+            if (IsKeyDown(KeyboardKey.KEY_A) && !isCollidingWall)
             {
                 tankObject.Rotate(-deltaTime);
             }
-            if (IsKeyDown(KeyboardKey.KEY_D))
+            if (IsKeyDown(KeyboardKey.KEY_D) && !isCollidingWall)
             {
                 tankObject.Rotate(deltaTime);
             }
-            if (IsKeyDown(KeyboardKey.KEY_W))
+            if (IsKeyDown(KeyboardKey.KEY_W) && !isCollidingWall)
             {
                 MathFunctions.Vector3 facing = new MathFunctions.Vector3(tankObject.LocalTransform.m1, tankObject.LocalTransform.m2, 1) * deltaTime * playerSpeed;
                 tankObject.Translate(facing.x, facing.y);
             }
-            if (IsKeyDown(KeyboardKey.KEY_S))
+            if (IsKeyDown(KeyboardKey.KEY_S) && !isCollidingWall)
             {
                 MathFunctions.Vector3 facing = new MathFunctions.Vector3(tankObject.LocalTransform.m1, tankObject.LocalTransform.m2, 1) * deltaTime * -playerSpeed;
                 tankObject.Translate(facing.x, facing.y);
@@ -193,6 +205,16 @@ namespace MatrixHierarchies
             #endregion
 
             #region Collision Demo
+            if (playerCollider.Overlaps(solidCollider))
+            {
+                tankObject.SetPosition(tankObject.GlobalTransform.m7 - (0.1f * tankObject.GlobalTransform.m5), tankObject.GlobalTransform.m8 - (0.1f * -tankObject.GlobalTransform.m4));
+                isCollidingWall = true;
+            }
+            else
+            {
+                isCollidingWall = false;
+            }
+
             if (boxCollider.Overlaps(playerCollider))
             {
                 boxColor = Color.RED;
@@ -206,6 +228,13 @@ namespace MatrixHierarchies
             {
                 Projectile temp = (Projectile)projectileHolder.GetChild(i);
 
+                if(temp.projectileCollider.Overlaps(target.targetCollider))
+                {
+                    target.Respawn();
+                    score++;
+                    projectileHolder.RemoveChild(temp);
+                }
+
                 if (!boxCollider.Overlaps(playerCollider))
                 {
                     if (temp.projectileCollider.Overlaps(boxCollider))
@@ -218,6 +247,7 @@ namespace MatrixHierarchies
                         boxColor = Color.GREEN;
                     }
                 }
+
             }
             #endregion
 
@@ -246,21 +276,31 @@ namespace MatrixHierarchies
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
+            DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
+
             if (showHitboxCorners)
             {
-                // DEBUG: Draw player Hitbox corners.
-                DrawCircle((int)playerCollider.Corners()[0].x, (int)playerCollider.Corners()[0].y, 6, Color.PURPLE);
-                DrawCircle((int)playerCollider.Corners()[1].x, (int)playerCollider.Corners()[1].y, 6, Color.DARKPURPLE);
-                DrawCircle((int)playerCollider.Corners()[2].x, (int)playerCollider.Corners()[2].y, 6, Color.PURPLE);
-                DrawCircle((int)playerCollider.Corners()[3].x, (int)playerCollider.Corners()[3].y, 6, Color.DARKPURPLE);
+                Color cornerColor = new Color();
 
-                // DEBUG: Draw green/red box's Hitbox corners.
-                DrawCircle((int)boxCollider.Corners()[0].x, (int)boxCollider.Corners()[0].y, 6, Color.BLUE);
-                DrawCircle((int)boxCollider.Corners()[1].x, (int)boxCollider.Corners()[1].y, 6, Color.DARKBLUE);
-                DrawCircle((int)boxCollider.Corners()[2].x, (int)boxCollider.Corners()[2].y, 6, Color.BLUE);
-                DrawCircle((int)boxCollider.Corners()[3].x, (int)boxCollider.Corners()[3].y, 6, Color.DARKBLUE);
+                DrawText("HITBOX VIEW", 60, 10, 12, rainbow);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (i % 2 == 0)
+                    {
+                        cornerColor = Color.GREEN;
+                    }
+                    else
+                    {
+                        cornerColor = Color.DARKPURPLE;
+                    }
+
+                    DrawCircle((int)playerCollider.Corners()[i].x, (int)playerCollider.Corners()[i].y, 6, cornerColor);
+                    DrawCircle((int)boxCollider.Corners()[i].x, (int)boxCollider.Corners()[i].y, 6, cornerColor);
+                    DrawCircle((int)solidCollider.Corners()[i].x, (int)solidCollider.Corners()[i].y, 6, cornerColor);
+                }
             }
-            
+
 
             foreach (SceneObject s in Hierarchy)
             {
@@ -268,7 +308,9 @@ namespace MatrixHierarchies
             }
 
             DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
-            DrawText("Press P to toggle hitbox logic.", 350, 460, 12, Color.GRAY);
+            DrawText("SCORE:", 540, 10, 14, Color.DARKGRAY);
+            DrawText($"{score}", 595, 10, 14, rainbow);
+            DrawText("Press P to toggle hitbox logic.", 350, 460, 12, Color.DARKGRAY);
             if (collisionToggle)
             {
                 DrawText("Transforming", 540, 460, 12, rainbow);
