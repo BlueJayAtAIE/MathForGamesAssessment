@@ -10,6 +10,8 @@ namespace MatrixHierarchies
     {
         Timer gameTime = new Timer();
 
+        int testHP = 3;
+
         public float remainingTime = 1;
         bool infiniteTime = false;
 
@@ -21,9 +23,7 @@ namespace MatrixHierarchies
         private float deltaTime;
         private float playerSpeed = 100f;
 
-        // false = static hitbox, true = resizing hitbox.
-        bool collisionToggle = false;
-        bool showHitboxCorners = false;
+        bool showHitboxCorners = true;
 
         bool isCollidingWall = false;
 
@@ -44,12 +44,8 @@ namespace MatrixHierarchies
         int score = 0;
         private int[] highscores = new int[3];
         private bool newHighscore = false;
-        private int newScorePlace = 0;
+        private int newScorePlace = -1;
         private static string highscorePath = "highscores.txt";
-
-        MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
-        SceneObject[] playerCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject()};
-        MathFunctions.Vector3[] pCornersArray = new MathFunctions.Vector3[4];
 
         Color boxColor = Color.GREEN;
         MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 120, 0), new MathFunctions.Vector3(200, 200, 0));
@@ -66,58 +62,45 @@ namespace MatrixHierarchies
             Hierarchy.Add(projectileHolder);
             Hierarchy.Add(targetHolder);
             Hierarchy.Add(tankObject);
-            targetHolder.AddChild(target);
-            targetHolder.AddChild(targetTwo);
-
-            tankSprite.Load("tankBlue_outline.png");
+              
+            tankSprite.Load("tankBlue_outline.png", tankObject);
             // Sprite is facing the wrong way... fix that here.
             tankSprite.SetRotate(-90 * (float)(Math.PI / 180.0f));
             // Sets an offset for the base, so it rotates around the center.
             tankSprite.SetPosition(-tankSprite.Width / 2.0f, tankSprite.Height / 2.0f);
 
-            turretSprite.Load("barrelBlue.png");
+            turretSprite.Load("barrelBlue.png", turretObject);
             turretSprite.SetRotate(-90 * (float)(Math.PI / 180.0f));
             // Set the turret offset from the tank base.
             turretSprite.SetPosition(0, turretSprite.Width / 2.0f);
 
-            // Min.
-            playerCornerPoints[0].SetPosition(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2));
-            // Max.
-            playerCornerPoints[1].SetPosition(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2));
-            // Other two corners.
-            playerCornerPoints[2].SetPosition(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2));
-            playerCornerPoints[3].SetPosition(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2));
+            targetHolder.AddChild(target);
+            targetHolder.AddChild(targetTwo);
 
             turretObject.AddChild(turretSprite);
             tankObject.AddChild(tankSprite);
             tankObject.AddChild(turretObject);
-            for (int i = 0; i < playerCornerPoints.Length; i++)
-            {
-                tankObject.AddChild(playerCornerPoints[i]);
-            }
 
-            // Final placement of the Tank.
             tankObject.SetPosition(GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f);
 
             #region Printing Controls
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("\n===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("            CONTROLS                                             ");
-            Console.WriteLine("   W - Forwards                                                  ");
-            Console.WriteLine("   S - Backwards                                                 ");
-            Console.WriteLine("   A - Rotate Left                                               ");
-            Console.WriteLine("   D - Rotate Right                                              ");
-            Console.WriteLine("   Q - Rotate Barrel Left                                        ");
-            Console.WriteLine("   E - Rotate Barrel Right                                       ");
-            Console.WriteLine("   Spacebar - Fire Projectile                                    ");
-            Console.WriteLine("   I - (Debug) Disable game timer                               ");
-            Console.WriteLine("   O - (Debug) Show Hitbox Corners                               ");
-            Console.WriteLine("   P - (Debug) Change Collider Logic                             ");
-            Console.WriteLine("                                                                 ");
-            Console.WriteLine("   Shoot targets for points.                                                   ");
-            Console.WriteLine("   Green box interacts with player and bullets.                                ");
-            Console.WriteLine("   Purple box is a solid wall, preventing movement.                            ");
+            Console.WriteLine("            CONTROLS                               ");
+            Console.WriteLine("   W - Forwards                                    ");
+            Console.WriteLine("   S - Backwards                                   ");
+            Console.WriteLine("   A - Rotate Left                                 ");
+            Console.WriteLine("   D - Rotate Right                                ");
+            Console.WriteLine("   Q - Rotate Barrel Left                          ");
+            Console.WriteLine("   E - Rotate Barrel Right                         ");
+            Console.WriteLine("   Spacebar - Fire Projectile                      ");
+            Console.WriteLine("   I - (Debug) Disable game timer                  ");
+            Console.WriteLine("   O - (Debug) Show Hitbox Corners                 ");
+            Console.WriteLine("                                                   ");
+            Console.WriteLine("   Shoot targets for points.                       ");
+            Console.WriteLine("   Green box interacts with player and bullets.    ");
+            Console.WriteLine("   Purple box is a solid wall, preventing movement.");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -126,47 +109,7 @@ namespace MatrixHierarchies
 
         public void Shutdown()
         {
-            StreamWriter writer = new StreamWriter(highscorePath);
-
-            if (score > highscores[0])
-            {
-                // 1st
-                // Record Scores
-                writer.WriteLine(score);
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(highscores[1]);
-                newHighscore = true;
-                newScorePlace = 0;
-            }
-            else if (score < highscores[0] && score > highscores[1])
-            {
-                // 2nd
-                // Record Scores
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(score);
-                writer.WriteLine(highscores[1]); 
-                newHighscore = true;
-                newScorePlace = 1;
-            }
-            else if (score < highscores[0] && score < highscores[1] && score > highscores[2])
-            {
-                // 3rd
-                // Record Scores
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(highscores[1]);
-                writer.WriteLine(score);
-                newHighscore = true;
-                newScorePlace = 2;
-            }
-            else
-            {
-                // None Place with Left Fail
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(highscores[1]);
-                writer.WriteLine(highscores[2]);
-            }
-            writer.Close();
-
+            SetScores(); 
             GetScores();
 
             bool okayToGo = false;
@@ -176,25 +119,33 @@ namespace MatrixHierarchies
 
                 ClearBackground(Color.RAYWHITE);
 
-                DrawText("Time's Up!", 240, (int)(GetScreenHeight() / 4.5f), 32, Color.RED);
+                if (remainingTime <= 0)
+                {
+                    DrawText("Time's Up!", 240, (int)(GetScreenHeight() / 4.5f), 32, Color.RED);
+                }
 
                 if (newHighscore)
                 {
                     DrawText("NEW HIGHSCORE!", 220, GetScreenHeight() / 3, 24, rainbow);
-                    for (int i = 0; i < highscores.Length; i++)
-                    {
-                        Color hsColor;
-                        if (newScorePlace == i)
-                        {
-                            hsColor = rainbow;
-                        }
-                        else
-                        {
-                            hsColor = Color.DARKGRAY;
-                        }
+                }
+                else
+                {
+                    DrawText("Highscores:", 255, GetScreenHeight() / 3, 24, Color.GRAY);
+                }
 
-                        DrawText($"{i + 1}: {highscores[i]}", 300, 190 + (25 * i), 20, hsColor);
+                for (int i = 0; i < highscores.Length; i++)
+                {
+                    Color hsColor;
+                    if (newScorePlace == i)
+                    {
+                        hsColor = rainbow;
                     }
+                    else
+                    {
+                        hsColor = Color.DARKGRAY;
+                    }
+
+                    DrawText($"{i + 1}: {highscores[i]}", 300, 190 + (25 * i), 20, hsColor);
                 }
 
                 DrawText("Press space to exit.", 245, 270, 16, Color.GRAY);
@@ -244,7 +195,7 @@ namespace MatrixHierarchies
 
             rainbowColorF++;
             if (rainbowColorF <= 0 || rainbowColorF >= 360) rainbowColorF = 0;
-            rainbow = ColorFromHSV(new Vector3(rainbowColorF, 1, 1));
+            rainbow = ColorFromHSV(new Vector3(rainbowColorF, 1, 1));    
 
             if (!infiniteTime)
             {
@@ -294,10 +245,6 @@ namespace MatrixHierarchies
                 temp.SetPosition(turretObject.GlobalTransform.m7 + (turretObject.GlobalTransform.m5 * 30), turretObject.GlobalTransform.m8 + (-turretObject.GlobalTransform.m4 * 30));
                 projectileHolder.AddChild(temp);
             }
-            if (IsKeyPressed(KeyboardKey.KEY_P))
-            {
-                collisionToggle = !collisionToggle;
-            }
             if (IsKeyPressed(KeyboardKey.KEY_O))
             {
                 showHitboxCorners = !showHitboxCorners;
@@ -305,24 +252,6 @@ namespace MatrixHierarchies
             if (IsKeyPressed(KeyboardKey.KEY_I))
             {
                 infiniteTime = !infiniteTime;
-            }
-            #endregion
-
-            #region Collision Box Updates
-            if (collisionToggle)
-            {
-                // For an AABB that resizes during transforms.
-                for (int i = 0; i < playerCornerPoints.Length; i++)
-                {
-                    pCornersArray[i] = new MathFunctions.Vector3(playerCornerPoints[i].GlobalTransform.m7, playerCornerPoints[i].GlobalTransform.m8, 0);
-                }
-                playerCollider.Fit(pCornersArray);
-            }
-            else
-            {
-                // For a static AABB. 
-                playerCollider.Resize(new MathFunctions.Vector3(tankObject.GlobalTransform.m7 - (tankSprite.Width / 2), tankObject.GlobalTransform.m8 - (tankSprite.Height / 2), 0),
-                                      new MathFunctions.Vector3(tankObject.GlobalTransform.m7 + (tankSprite.Width / 2), tankObject.GlobalTransform.m8 + (tankSprite.Height / 2), 0));
             }
             #endregion
 
@@ -338,7 +267,7 @@ namespace MatrixHierarchies
             #endregion
 
             #region Collision Demo
-            if (playerCollider.Overlaps(solidCollider))
+            if (tankSprite.collider.Overlaps(solidCollider) && testHP > 0)
             {
                 tankObject.SetPosition(tankObject.GlobalTransform.m7 - (0.1f * Math.Abs(tankObject.GlobalTransform.m5)), tankObject.GlobalTransform.m8 - (0.1f * Math.Abs(-tankObject.GlobalTransform.m4)));
                 isCollidingWall = true;
@@ -348,7 +277,7 @@ namespace MatrixHierarchies
                 isCollidingWall = false;
             }
 
-            if (boxCollider.Overlaps(playerCollider))
+            if (boxCollider.Overlaps(tankSprite.collider))
             {
                 boxColor = Color.RED;
             }
@@ -361,9 +290,10 @@ namespace MatrixHierarchies
             {
                 Projectile temp = (Projectile)projectileHolder.GetChild(i);
 
-                if (temp.projectileCollider.Overlaps(solidCollider))
+                if (temp.projectileCollider.Overlaps(solidCollider) && testHP > 0)
                 {
                     projectileHolder.RemoveChild(temp);
+                    testHP--;
                 }
 
                 for (int j = 0; j < targetHolder.GetChildCount(); j++)
@@ -378,7 +308,7 @@ namespace MatrixHierarchies
                     }
                 }
 
-                if (!boxCollider.Overlaps(playerCollider))
+                if (!boxCollider.Overlaps(tankSprite.collider))
                 {
                     if (temp.projectileCollider.Overlaps(boxCollider))
                     {
@@ -419,8 +349,10 @@ namespace MatrixHierarchies
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
-            DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
-
+            if (testHP > 0)
+            {
+                DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
+            }
 
             if (showHitboxCorners)
             {
@@ -439,7 +371,7 @@ namespace MatrixHierarchies
                         cornerColor = Color.DARKPURPLE;
                     }
 
-                    DrawCircle((int)playerCollider.Corners()[i].x, (int)playerCollider.Corners()[i].y, 6, cornerColor);
+                    DrawCircle((int)tankSprite.collider.Corners()[i].x, (int)tankSprite.collider.Corners()[i].y, 6, cornerColor);
                     DrawCircle((int)boxCollider.Corners()[i].x, (int)boxCollider.Corners()[i].y, 6, cornerColor);
                     DrawCircle((int)solidCollider.Corners()[i].x, (int)solidCollider.Corners()[i].y, 6, cornerColor);
                 }
@@ -461,15 +393,6 @@ namespace MatrixHierarchies
             DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
             DrawText("SCORE:", 540, 10, 14, Color.DARKGRAY);
             DrawText($"{score}", 595, 10, 14, rainbow);
-            DrawText("Press P to toggle hitbox logic.", 350, 460, 12, Color.DARKGRAY);
-            if (collisionToggle)
-            {
-                DrawText("Transforming", 540, 460, 12, rainbow);
-            }
-            else
-            {
-                DrawText("Static", 565, 460, 12, rainbow);
-            }
 
             EndDrawing();
         }
@@ -482,6 +405,46 @@ namespace MatrixHierarchies
                 int.TryParse(reader.ReadLine(), out highscores[i]);
             }
             reader.Close();
+        }
+
+        public void SetScores()
+        {
+            StreamWriter writer = new StreamWriter(highscorePath);
+            if (score > highscores[0])
+            {
+                // 1st
+                writer.WriteLine(score);
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                newHighscore = true;
+                newScorePlace = 0;
+            }
+            else if (score < highscores[0] && score > highscores[1])
+            {
+                // 2nd
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(score);
+                writer.WriteLine(highscores[1]);
+                newHighscore = true;
+                newScorePlace = 1;
+            }
+            else if (score < highscores[0] && score < highscores[1] && score > highscores[2])
+            {
+                // 3rd
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                writer.WriteLine(score);
+                newHighscore = true;
+                newScorePlace = 2;
+            }
+            else
+            {
+                // None Place with Left Fail
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                writer.WriteLine(highscores[2]);
+            }
+            writer.Close();
         }
     }
 }

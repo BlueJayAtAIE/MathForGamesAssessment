@@ -121,10 +121,7 @@ namespace MathFunctions
         // Conversions
         public rl.Vector2 ConvertedToRaylibV2()
         {
-            rl.Vector2 tmp;
-            tmp.x = x;
-            tmp.y = y;
-            return tmp;
+            return new rl.Vector2(x, y);
         }
 
         // Addition

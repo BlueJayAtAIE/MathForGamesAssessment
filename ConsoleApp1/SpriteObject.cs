@@ -1,4 +1,5 @@
 ﻿using System;
+using MathFunctions;
 using Raylib;
 using static Raylib.Raylib;
 
@@ -8,6 +9,12 @@ namespace MatrixHierarchies
     {
         Texture2D texture = new Texture2D();
         Image image = new Image();
+
+        SceneObject parentObject = new SceneObject();
+
+        public AABB collider = new AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
+        SceneObject[] colliderCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject() };
+        MathFunctions.Vector3[] pCornersArray = new MathFunctions.Vector3[4];
 
         public float Width
         {
@@ -23,13 +30,37 @@ namespace MatrixHierarchies
             // Purposefully Blank.
         }
 
-        public void Load(string fileName)
+        public void Load(string fileName, SceneObject parent)
         {
             image = LoadImage(fileName);
             texture = LoadTextureFromImage(image);
+
+            parentObject = parent;
+
+            // Min.
+            colliderCornerPoints[0].SetPosition(parentObject.GlobalTransform.m7 - (texture.width / 2), parentObject.GlobalTransform.m8 - (texture.height / 2));
+            // Max.
+            colliderCornerPoints[1].SetPosition(parentObject.GlobalTransform.m7 + (texture.width / 2), parentObject.GlobalTransform.m8 + (texture.height / 2));
+            // Other two corners.
+            colliderCornerPoints[2].SetPosition(parentObject.GlobalTransform.m7 - (texture.width / 2), parentObject.GlobalTransform.m8 + (texture.height / 2));
+            colliderCornerPoints[3].SetPosition(parentObject.GlobalTransform.m7 + (texture.width / 2), parentObject.GlobalTransform.m8 - (texture.height / 2));
+
+            for (int i = 0; i < colliderCornerPoints.Length; i++)
+            {
+                AddChild(colliderCornerPoints[i]);
+            }
         }
 
         // Overrides ---------------------------------------------------------
+        public override void OnUpdate(float deltaTime)
+        {
+
+            collider.Resize(new MathFunctions.Vector3(parentObject.GlobalTransform.m7 - (texture.width / 2), parentObject.GlobalTransform.m8 - (texture.height / 2), 0),
+                            new MathFunctions.Vector3(parentObject.GlobalTransform.m7 + (texture.width / 2), parentObject.GlobalTransform.m8 + (texture.height / 2), 0));
+
+            base.OnUpdate(deltaTime);
+        }
+
         public override void OnDraw()
         {
             // Pulls the rotation in radians and converts to degrees for use in Raylib's draw funtion.
@@ -43,12 +74,12 @@ namespace MatrixHierarchies
         }
     }
 
-    class Projectile : SpriteObject
+    class Projectile : SceneObject
     {
         private float lifetime = 1.5f;
         private float speed = 300f;
         private MathFunctions.Vector3 direction = new MathFunctions.Vector3(0, 0, 0);
-        public MathFunctions.Sphere projectileCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 0), 0);
+        public Sphere projectileCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 0), 0);
 
         public Projectile(MathFunctions.Vector3 dir)
         {
@@ -81,24 +112,24 @@ namespace MatrixHierarchies
         }
     }
 
-    class Target : SpriteObject
+    class Target : SceneObject
     {
-        public MathFunctions.Sphere targetCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 15), 0);
+        public Sphere targetCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 15), 0);
         private float spawnPoint;
 
         public Target()
         {
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 600);
+            spawnPoint = Tools.rng.Next(40, 600);
             globalTransform.m7 = spawnPoint;
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 440);
+            spawnPoint = Tools.rng.Next(40, 440);
             globalTransform.m8 = spawnPoint;
         }
 
         public void Respawn()
         {
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 600);
+            spawnPoint = Tools.rng.Next(40, 600);
             globalTransform.m7 = spawnPoint;
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 440);
+            spawnPoint = Tools.rng.Next(40, 440);
             globalTransform.m8 = spawnPoint;
         }
 
