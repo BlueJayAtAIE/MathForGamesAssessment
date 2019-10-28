@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Raylib;
 using static Raylib.Raylib;
 
@@ -8,6 +9,9 @@ namespace MatrixHierarchies
     class Game
     {
         Timer gameTime = new Timer();
+
+        public float remainingTime = 1;
+        bool infiniteTime = false;
 
         private float timer = 0;
         private int fps = 1;
@@ -33,8 +37,15 @@ namespace MatrixHierarchies
         SpriteObject tankSprite = new SpriteObject();
         SpriteObject turretSprite = new SpriteObject();
 
+        SceneObject targetHolder = new SceneObject();
         Target target = new Target();
+        Target targetTwo = new Target();
+
         int score = 0;
+        private int[] highscores = new int[3];
+        private bool newHighscore = false;
+        private int newScorePlace = 0;
+        private static string highscorePath = "highscores.txt";
 
         MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
         SceneObject[] playerCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject()};
@@ -50,9 +61,13 @@ namespace MatrixHierarchies
 
         public void Init()
         {
+            GetScores();
+
             Hierarchy.Add(projectileHolder);
+            Hierarchy.Add(targetHolder);
             Hierarchy.Add(tankObject);
-            Hierarchy.Add(target);
+            targetHolder.AddChild(target);
+            targetHolder.AddChild(targetTwo);
 
             tankSprite.Load("tankBlue_outline.png");
             // Sprite is facing the wrong way... fix that here.
@@ -96,6 +111,7 @@ namespace MatrixHierarchies
             Console.WriteLine("   Q - Rotate Barrel Left                                        ");
             Console.WriteLine("   E - Rotate Barrel Right                                       ");
             Console.WriteLine("   Spacebar - Fire Projectile                                    ");
+            Console.WriteLine("   I - (Debug) Disable game timer                               ");
             Console.WriteLine("   O - (Debug) Show Hitbox Corners                               ");
             Console.WriteLine("   P - (Debug) Change Collider Logic                             ");
             Console.WriteLine("                                                                 ");
@@ -110,7 +126,106 @@ namespace MatrixHierarchies
 
         public void Shutdown()
         {
-            // Purposefully Blank.
+            StreamWriter writer = new StreamWriter(highscorePath);
+
+            if (score > highscores[0])
+            {
+                // 1st
+                // Record Scores
+                writer.WriteLine(score);
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                newHighscore = true;
+                newScorePlace = 0;
+            }
+            else if (score < highscores[0] && score > highscores[1])
+            {
+                // 2nd
+                // Record Scores
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(score);
+                writer.WriteLine(highscores[1]); 
+                newHighscore = true;
+                newScorePlace = 1;
+            }
+            else if (score < highscores[0] && score < highscores[1] && score > highscores[2])
+            {
+                // 3rd
+                // Record Scores
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                writer.WriteLine(score);
+                newHighscore = true;
+                newScorePlace = 2;
+            }
+            else
+            {
+                // None Place with Left Fail
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                writer.WriteLine(highscores[2]);
+            }
+            writer.Close();
+
+            GetScores();
+
+            bool okayToGo = false;
+            while (!okayToGo)
+            {
+                BeginDrawing();
+
+                ClearBackground(Color.RAYWHITE);
+
+                DrawText("Time's Up!", 240, (int)(GetScreenHeight() / 4.5f), 32, Color.RED);
+
+                if (newHighscore)
+                {
+                    DrawText("NEW HIGHSCORE!", 220, GetScreenHeight() / 3, 24, rainbow);
+                    for (int i = 0; i < highscores.Length; i++)
+                    {
+                        Color hsColor;
+                        if (newScorePlace == i)
+                        {
+                            hsColor = rainbow;
+                        }
+                        else
+                        {
+                            hsColor = Color.DARKGRAY;
+                        }
+
+                        DrawText($"{i + 1}: {highscores[i]}", 300, 190 + (25 * i), 20, hsColor);
+                    }
+                }
+
+                DrawText("Press space to exit.", 245, 270, 16, Color.GRAY);
+
+                EndDrawing();
+
+                if (IsKeyPressed(KeyboardKey.KEY_SPACE))
+                {
+                    okayToGo = true;
+                }
+
+                UpdateMin();
+            }
+        }
+
+        public void UpdateMin()
+        {
+            deltaTime = gameTime.GetDeltaTime();
+
+            timer += deltaTime;
+            if (timer >= 1)
+            {
+                fps = frames;
+                frames = 0;
+                timer -= 1;
+            }
+            frames++;
+
+            rainbowColorF++;
+            if (rainbowColorF <= 0 || rainbowColorF >= 360) rainbowColorF = 0;
+            rainbow = ColorFromHSV(new Vector3(rainbowColorF, 1, 1));
         }
 
         public void Update()
@@ -130,6 +245,20 @@ namespace MatrixHierarchies
             rainbowColorF++;
             if (rainbowColorF <= 0 || rainbowColorF >= 360) rainbowColorF = 0;
             rainbow = ColorFromHSV(new Vector3(rainbowColorF, 1, 1));
+
+            if (!infiniteTime)
+            {
+                remainingTime = 45 - gameTime.Seconds; // THIS SHOULD BE 45
+            }
+            else
+            {
+                remainingTime = 1;
+            }
+
+            if (remainingTime <= 0)
+            {
+                remainingTime = 0;
+            }
             #endregion
 
             #region Player Input
@@ -173,6 +302,10 @@ namespace MatrixHierarchies
             {
                 showHitboxCorners = !showHitboxCorners;
             }
+            if (IsKeyPressed(KeyboardKey.KEY_I))
+            {
+                infiniteTime = !infiniteTime;
+            }
             #endregion
 
             #region Collision Box Updates
@@ -207,7 +340,7 @@ namespace MatrixHierarchies
             #region Collision Demo
             if (playerCollider.Overlaps(solidCollider))
             {
-                tankObject.SetPosition(tankObject.GlobalTransform.m7 - (0.1f * tankObject.GlobalTransform.m5), tankObject.GlobalTransform.m8 - (0.1f * -tankObject.GlobalTransform.m4));
+                tankObject.SetPosition(tankObject.GlobalTransform.m7 - (0.1f * Math.Abs(tankObject.GlobalTransform.m5)), tankObject.GlobalTransform.m8 - (0.1f * Math.Abs(-tankObject.GlobalTransform.m4)));
                 isCollidingWall = true;
             }
             else
@@ -233,11 +366,16 @@ namespace MatrixHierarchies
                     projectileHolder.RemoveChild(temp);
                 }
 
-                if (temp.projectileCollider.Overlaps(target.targetCollider))
+                for (int j = 0; j < targetHolder.GetChildCount(); j++)
                 {
-                    target.Respawn();
-                    score++;
-                    projectileHolder.RemoveChild(temp);
+                    Target temptarget = (Target)targetHolder.GetChild(j);
+
+                    if (temp.projectileCollider.Overlaps(temptarget.targetCollider))
+                    {
+                        temptarget.Respawn();
+                        score++;
+                        projectileHolder.RemoveChild(temp);
+                    }
                 }
 
                 if (!boxCollider.Overlaps(playerCollider))
@@ -283,6 +421,7 @@ namespace MatrixHierarchies
 
             DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
 
+
             if (showHitboxCorners)
             {
                 Color cornerColor = new Color();
@@ -306,11 +445,18 @@ namespace MatrixHierarchies
                 }
             }
 
-
             foreach (SceneObject s in Hierarchy)
             {
                 s.Draw();
             }
+
+            DrawText("Highscores:", 10, 400, 20, rainbow);
+            for (int i = 0; i < highscores.Length; i++)
+            {
+                DrawText($"{i + 1}: {highscores[i]}", 20, 425 + (15 * i), 14, Color.DARKGRAY);
+            }
+
+            DrawText($"Time Left: {remainingTime}", 245, 20, 18, Color.RED);
 
             DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
             DrawText("SCORE:", 540, 10, 14, Color.DARKGRAY);
@@ -322,10 +468,20 @@ namespace MatrixHierarchies
             }
             else
             {
-                DrawText("Static", 540, 460, 12, rainbow);
+                DrawText("Static", 565, 460, 12, rainbow);
             }
 
             EndDrawing();
+        }
+
+        public void GetScores()
+        {
+            StreamReader reader = new StreamReader(highscorePath);
+            for (int i = 0; i < highscores.Length; i++)
+            {
+                int.TryParse(reader.ReadLine(), out highscores[i]);
+            }
+            reader.Close();
         }
     }
 }

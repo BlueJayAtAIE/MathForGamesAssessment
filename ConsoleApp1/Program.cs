@@ -51,7 +51,7 @@ namespace MatrixHierarchies
 
             game.Init();
 
-            while (!WindowShouldClose())
+            while (!WindowShouldClose() && game.remainingTime > 0)
             {
                 game.Update();
                 game.Draw();
