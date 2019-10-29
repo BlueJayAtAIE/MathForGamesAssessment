@@ -10,6 +10,8 @@ namespace MatrixHierarchies
     {
         Timer gameTime = new Timer();
 
+        int testHP = 3;
+
         public float remainingTime = 1;
         bool infiniteTime = false;
 
@@ -44,7 +46,7 @@ namespace MatrixHierarchies
         int score = 0;
         private int[] highscores = new int[3];
         private bool newHighscore = false;
-        private int newScorePlace = 0;
+        private int newScorePlace = -1;
         private static string highscorePath = "highscores.txt";
 
         MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
@@ -126,47 +128,7 @@ namespace MatrixHierarchies
 
         public void Shutdown()
         {
-            StreamWriter writer = new StreamWriter(highscorePath);
-
-            if (score > highscores[0])
-            {
-                // 1st
-                // Record Scores
-                writer.WriteLine(score);
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(highscores[1]);
-                newHighscore = true;
-                newScorePlace = 0;
-            }
-            else if (score < highscores[0] && score > highscores[1])
-            {
-                // 2nd
-                // Record Scores
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(score);
-                writer.WriteLine(highscores[1]); 
-                newHighscore = true;
-                newScorePlace = 1;
-            }
-            else if (score < highscores[0] && score < highscores[1] && score > highscores[2])
-            {
-                // 3rd
-                // Record Scores
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(highscores[1]);
-                writer.WriteLine(score);
-                newHighscore = true;
-                newScorePlace = 2;
-            }
-            else
-            {
-                // None Place with Left Fail
-                writer.WriteLine(highscores[0]);
-                writer.WriteLine(highscores[1]);
-                writer.WriteLine(highscores[2]);
-            }
-            writer.Close();
-
+            SetScores();
             GetScores();
 
             bool okayToGo = false;
@@ -176,25 +138,33 @@ namespace MatrixHierarchies
 
                 ClearBackground(Color.RAYWHITE);
 
-                DrawText("Time's Up!", 240, (int)(GetScreenHeight() / 4.5f), 32, Color.RED);
+                if (remainingTime <= 0)
+                {
+                    DrawText("Time's Up!", 240, (int)(GetScreenHeight() / 4.5f), 32, Color.RED);
+                }
 
                 if (newHighscore)
                 {
                     DrawText("NEW HIGHSCORE!", 220, GetScreenHeight() / 3, 24, rainbow);
-                    for (int i = 0; i < highscores.Length; i++)
-                    {
-                        Color hsColor;
-                        if (newScorePlace == i)
-                        {
-                            hsColor = rainbow;
-                        }
-                        else
-                        {
-                            hsColor = Color.DARKGRAY;
-                        }
+                }
+                else
+                {
+                    DrawText("Highscores:", 255, GetScreenHeight() / 3, 24, Color.GRAY);
+                }
 
-                        DrawText($"{i + 1}: {highscores[i]}", 300, 190 + (25 * i), 20, hsColor);
+                for (int i = 0; i < highscores.Length; i++)
+                {
+                    Color hsColor;
+                    if (newScorePlace == i)
+                    {
+                        hsColor = rainbow;
                     }
+                    else
+                    {
+                        hsColor = Color.DARKGRAY;
+                    }
+
+                    DrawText($"{i + 1}: {highscores[i]}", 300, 190 + (25 * i), 20, hsColor);
                 }
 
                 DrawText("Press space to exit.", 245, 270, 16, Color.GRAY);
@@ -338,7 +308,7 @@ namespace MatrixHierarchies
             #endregion
 
             #region Collision Demo
-            if (playerCollider.Overlaps(solidCollider))
+            if (playerCollider.Overlaps(solidCollider) && testHP > 0)
             {
                 tankObject.SetPosition(tankObject.GlobalTransform.m7 - (0.1f * Math.Abs(tankObject.GlobalTransform.m5)), tankObject.GlobalTransform.m8 - (0.1f * Math.Abs(-tankObject.GlobalTransform.m4)));
                 isCollidingWall = true;
@@ -361,9 +331,10 @@ namespace MatrixHierarchies
             {
                 Projectile temp = (Projectile)projectileHolder.GetChild(i);
 
-                if (temp.projectileCollider.Overlaps(solidCollider))
+                if (temp.projectileCollider.Overlaps(solidCollider) && testHP > 0)
                 {
                     projectileHolder.RemoveChild(temp);
+                    testHP--;
                 }
 
                 for (int j = 0; j < targetHolder.GetChildCount(); j++)
@@ -419,8 +390,10 @@ namespace MatrixHierarchies
 
             DrawRectangle(120, 120, 80, 80, boxColor);
 
-            DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
-
+            if (testHP > 0)
+            {
+                DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
+            }
 
             if (showHitboxCorners)
             {
@@ -441,7 +414,10 @@ namespace MatrixHierarchies
 
                     DrawCircle((int)playerCollider.Corners()[i].x, (int)playerCollider.Corners()[i].y, 6, cornerColor);
                     DrawCircle((int)boxCollider.Corners()[i].x, (int)boxCollider.Corners()[i].y, 6, cornerColor);
-                    DrawCircle((int)solidCollider.Corners()[i].x, (int)solidCollider.Corners()[i].y, 6, cornerColor);
+                    if (testHP > 0)
+                    {
+                        DrawCircle((int)solidCollider.Corners()[i].x, (int)solidCollider.Corners()[i].y, 6, cornerColor);
+                    }
                 }
             }
 
@@ -482,6 +458,49 @@ namespace MatrixHierarchies
                 int.TryParse(reader.ReadLine(), out highscores[i]);
             }
             reader.Close();
+        }
+
+        public void SetScores()
+        {
+            StreamWriter writer = new StreamWriter(highscorePath);
+            if (score > highscores[0])
+            {
+                // 1st
+                // Record Scores
+                writer.WriteLine(score);
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                newHighscore = true;
+                newScorePlace = 0;
+            }
+            else if (score < highscores[0] && score > highscores[1])
+            {
+                // 2nd
+                // Record Scores
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(score);
+                writer.WriteLine(highscores[1]);
+                newHighscore = true;
+                newScorePlace = 1;
+            }
+            else if (score < highscores[0] && score < highscores[1] && score > highscores[2])
+            {
+                // 3rd
+                // Record Scores
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                writer.WriteLine(score);
+                newHighscore = true;
+                newScorePlace = 2;
+            }
+            else
+            {
+                // None Place with Left Fail
+                writer.WriteLine(highscores[0]);
+                writer.WriteLine(highscores[1]);
+                writer.WriteLine(highscores[2]);
+            }
+            writer.Close();
         }
     }
 }
