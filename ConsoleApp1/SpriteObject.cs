@@ -6,7 +6,7 @@ namespace MatrixHierarchies
 {
     class SpriteObject : SceneObject
     {
-        Texture2D texture = new Texture2D();
+        public Texture2D texture = new Texture2D();
         Image image = new Image();
 
         public float Width
@@ -43,9 +43,9 @@ namespace MatrixHierarchies
         }
     }
 
-    class Projectile : SpriteObject
+    class Projectile : SceneObject
     {
-        private float lifetime = 1.5f;
+        private float lifetime = 1.2f;
         private float speed = 300f;
         private MathFunctions.Vector3 direction = new MathFunctions.Vector3(0, 0, 0);
         public MathFunctions.Sphere projectileCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 0), 0);
@@ -81,25 +81,22 @@ namespace MatrixHierarchies
         }
     }
 
-    class Target : SpriteObject
+    class Target : SceneObject
     {
         public MathFunctions.Sphere targetCollider = new MathFunctions.Sphere(new MathFunctions.Vector3(0, 0, 15), 0);
-        private float spawnPoint;
+        private MathFunctions.Vector2 spawnPoint;
 
         public Target()
         {
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 600);
-            globalTransform.m7 = spawnPoint;
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 440);
-            globalTransform.m8 = spawnPoint;
+            Respawn();
         }
 
         public void Respawn()
         {
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 600);
-            globalTransform.m7 = spawnPoint;
-            spawnPoint = MathFunctions.Tools.rng.Next(40, 440);
-            globalTransform.m8 = spawnPoint;
+            spawnPoint.x = MathFunctions.Tools.rng.Next(40, 600);
+            globalTransform.m7 = spawnPoint.x;
+            spawnPoint.y = MathFunctions.Tools.rng.Next(40, 440);
+            globalTransform.m8 = spawnPoint.y;
         }
 
         public override void OnUpdate(float deltaTime)
@@ -115,6 +112,68 @@ namespace MatrixHierarchies
             DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 6, Color.RED);
             DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 9, Color.WHITE);
             DrawCircle((int)targetCollider.center.x, (int)targetCollider.center.y, (int)targetCollider.radius - 12, Color.RED);
+        }
+    }
+
+    class Destructable : SpriteObject
+    {
+        public MathFunctions.AABB destCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
+        private MathFunctions.Vector2 spawnPoint;
+        public float destHP = 3;
+
+        public Destructable()
+        {
+            Load("box.png");
+
+            while (true)
+            {
+                spawnPoint.x = MathFunctions.Tools.rng.Next(40, 600);
+                globalTransform.m7 = spawnPoint.x;
+                spawnPoint.y = MathFunctions.Tools.rng.Next(40, 440);
+                globalTransform.m8 = spawnPoint.y;
+
+                if (!(250 < spawnPoint.x && 320 > spawnPoint.x || 180 > spawnPoint.y && 300 < spawnPoint.y))
+                {
+                    break;
+                }
+            }            
+        }
+
+        public override void OnUpdate(float deltaTime)
+        {
+            if (destHP > 0)
+            {
+                destCollider.Resize(new MathFunctions.Vector3(globalTransform.m7, globalTransform.m8, 0),
+                                    new MathFunctions.Vector3(globalTransform.m7 + (texture.width), globalTransform.m8 + (texture.height), 0));
+            }
+        }
+
+        public override void OnDraw()
+        {
+            if (destHP > 0)
+            {
+                base.OnDraw();
+            }
+        }
+    }
+
+    class Wall : SpriteObject
+    {
+        public MathFunctions.AABB wallCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
+
+        public Wall(bool isWide)
+        {
+            if (isWide)
+            {
+                Load("WallLong.png");
+            }
+            else
+            {
+                Load("WallTall.png");
+            }
+
+            wallCollider.Resize(new MathFunctions.Vector3(globalTransform.m7, globalTransform.m8, 0),
+                                new MathFunctions.Vector3(globalTransform.m7 + (texture.width), globalTransform.m8 + (texture.height), 0));
         }
     }
 }

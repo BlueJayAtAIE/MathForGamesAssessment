@@ -10,15 +10,12 @@ namespace MatrixHierarchies
     {
         Timer gameTime = new Timer();
 
-        int testHP = 3;
-
         public float remainingTime = 1;
         bool infiniteTime = false;
 
         private float timer = 0;
         private int fps = 1;
         private int frames;
-        private float debugTimer = 0;
 
         private float deltaTime;
         private float playerSpeed = 100f;
@@ -31,17 +28,19 @@ namespace MatrixHierarchies
 
         List<SceneObject> Hierarchy = new List<SceneObject>();
 
-        SceneObject projectileHolder = new SceneObject();
-
         SceneObject tankObject = new SceneObject();
         SceneObject turretObject = new SceneObject();
 
         SpriteObject tankSprite = new SpriteObject();
         SpriteObject turretSprite = new SpriteObject();
 
+        SceneObject projectileHolder = new SceneObject();
+
+        SceneObject destructableHolder = new SceneObject();
+
         SceneObject targetHolder = new SceneObject();
-        Target target = new Target();
-        Target targetTwo = new Target();
+
+        SceneObject wallHolder = new SceneObject();
 
         int score = 0;
         private int[] highscores = new int[3];
@@ -52,11 +51,10 @@ namespace MatrixHierarchies
         MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
         SceneObject[] playerCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject()};
         MathFunctions.Vector3[] pCornersArray = new MathFunctions.Vector3[4];
+        MathFunctions.Vector3 playerFacing = new MathFunctions.Vector3(0, 0, 0);
 
         Color boxColor = Color.GREEN;
         MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 120, 0), new MathFunctions.Vector3(200, 200, 0));
-
-        MathFunctions.AABB solidCollider = new MathFunctions.AABB(new MathFunctions.Vector3(460, 260, 0), new MathFunctions.Vector3(500, 300, 0));
 
         public float rainbowColorF = 1.0f;
         public Color rainbow = new Color();
@@ -65,11 +63,42 @@ namespace MatrixHierarchies
         {
             GetScores();
 
+            //TODO: SET UP THE WALLS AROUND THE MAP - DONE BUT ALSO MAKE THE PLAYER COLLIDE WITH THEM
+            //TODO: MAKE THINGS LOOK LESS LIKE HOT GAGBAGE
+           
+            // Add the holders and tank objects to the Hierarchy.
+            Hierarchy.Add(wallHolder);
             Hierarchy.Add(projectileHolder);
             Hierarchy.Add(targetHolder);
+            Hierarchy.Add(destructableHolder);
             Hierarchy.Add(tankObject);
-            targetHolder.AddChild(target);
-            targetHolder.AddChild(targetTwo);
+
+            // Add a specified amount of Targets to the game. Reccomended 2.
+            for (int i = 0; i < 2; i++)
+            {
+                targetHolder.AddChild(new Target());
+            }
+           
+            // Add a specified amount of Destructable Objects to the game. Reccomended 4.
+            for (int i = 0; i < 4; i++)
+            {
+                destructableHolder.AddChild(new Destructable());
+            }
+
+            Wall topWall = new Wall(true);
+            Wall bottomWall = new Wall(true);
+            Wall leftWall = new Wall(false);
+            Wall RightWall = new Wall(false);
+
+            topWall.SetPosition(40, 0);
+            bottomWall.SetPosition(40, 440);
+            leftWall.SetPosition(0, 0);
+            RightWall.SetPosition(600, 0);
+
+            wallHolder.AddChild(topWall);
+            wallHolder.AddChild(bottomWall);
+            wallHolder.AddChild(leftWall);
+            wallHolder.AddChild(RightWall);
 
             tankSprite.Load("tankBlue_outline.png");
             // Sprite is facing the wrong way... fix that here.
@@ -119,7 +148,7 @@ namespace MatrixHierarchies
             Console.WriteLine("                                                                 ");
             Console.WriteLine("   Shoot targets for points.                                                   ");
             Console.WriteLine("   Green box interacts with player and bullets.                                ");
-            Console.WriteLine("   Purple box is a solid wall, preventing movement.                            ");
+            Console.WriteLine("   Boxes are solid, you can break them with shots.                       ");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -138,11 +167,15 @@ namespace MatrixHierarchies
 
                 ClearBackground(Color.RAYWHITE);
 
+                wallHolder.Draw();
+
+                // Displays only if the player played the game in full.
                 if (remainingTime <= 0)
                 {
                     DrawText("Time's Up!", 240, (int)(GetScreenHeight() / 4.5f), 32, Color.RED);
                 }
 
+                // Changes text upon player getting a new highscore.
                 if (newHighscore)
                 {
                     DrawText("NEW HIGHSCORE!", 220, GetScreenHeight() / 3, 24, rainbow);
@@ -152,6 +185,8 @@ namespace MatrixHierarchies
                     DrawText("Highscores:", 255, GetScreenHeight() / 3, 24, Color.GRAY);
                 }
 
+                // Displays leaderboard.
+                // If the player got a new highscore, it will be highlighted.
                 for (int i = 0; i < highscores.Length; i++)
                 {
                     Color hsColor;
@@ -171,7 +206,8 @@ namespace MatrixHierarchies
 
                 EndDrawing();
 
-                if (IsKeyPressed(KeyboardKey.KEY_SPACE))
+                // Escape works too.
+                if (IsKeyPressed(KeyboardKey.KEY_SPACE) || IsKeyPressed(KeyboardKey.KEY_ESCAPE))
                 {
                     okayToGo = true;
                 }
@@ -180,6 +216,10 @@ namespace MatrixHierarchies
             }
         }
 
+        /// <summary>
+        /// "Update Minimal"; A version of update that updates only time and the rainbow text.
+        /// To be used only on the ending screen.
+        /// </summary>
         public void UpdateMin()
         {
             deltaTime = gameTime.GetDeltaTime();
@@ -212,10 +252,14 @@ namespace MatrixHierarchies
             }
             frames++;
 
+            // Updates the rainbow color every frame!
             rainbowColorF++;
             if (rainbowColorF <= 0 || rainbowColorF >= 360) rainbowColorF = 0;
             rainbow = ColorFromHSV(new Vector3(rainbowColorF, 1, 1));
 
+            // In-game timer.
+            // If the infinite time cheat is on, time will never advance. Once time is
+            // resumed, the game will likely instantly end. Only intended for testing.
             if (!infiniteTime)
             {
                 remainingTime = 45 - gameTime.Seconds; // THIS SHOULD BE 45
@@ -225,6 +269,7 @@ namespace MatrixHierarchies
                 remainingTime = 1;
             }
 
+            // Clamped to prevent the player from seeing "Time Remaining: [negitive number]".
             if (remainingTime <= 0)
             {
                 remainingTime = 0;
@@ -232,6 +277,8 @@ namespace MatrixHierarchies
             #endregion
 
             #region Player Input
+            // Player movement is restricted when colliding with a wall.
+            // They can still move their turret and fire however.
             if (IsKeyDown(KeyboardKey.KEY_A) && !isCollidingWall)
             {
                 tankObject.Rotate(-deltaTime);
@@ -242,13 +289,13 @@ namespace MatrixHierarchies
             }
             if (IsKeyDown(KeyboardKey.KEY_W) && !isCollidingWall)
             {
-                MathFunctions.Vector3 facing = new MathFunctions.Vector3(tankObject.LocalTransform.m1, tankObject.LocalTransform.m2, 1) * deltaTime * playerSpeed;
-                tankObject.Translate(facing.x, facing.y);
+                playerFacing = new MathFunctions.Vector3(tankObject.LocalTransform.m1, tankObject.LocalTransform.m2, 1) * deltaTime * playerSpeed;
+                tankObject.Translate(playerFacing.x, playerFacing.y);
             }
             if (IsKeyDown(KeyboardKey.KEY_S) && !isCollidingWall)
             {
-                MathFunctions.Vector3 facing = new MathFunctions.Vector3(tankObject.LocalTransform.m1, tankObject.LocalTransform.m2, 1) * deltaTime * -playerSpeed;
-                tankObject.Translate(facing.x, facing.y);
+                playerFacing = new MathFunctions.Vector3(tankObject.LocalTransform.m1, tankObject.LocalTransform.m2, 1) * deltaTime * -playerSpeed;
+                tankObject.Translate(playerFacing.x, playerFacing.y);
             }
             if (IsKeyDown(KeyboardKey.KEY_Q))
             {
@@ -260,8 +307,13 @@ namespace MatrixHierarchies
             }
             if (IsKeyPressed(KeyboardKey.KEY_SPACE))
             {
+                // Create a new projectile going the direction of the turret's rotation.
                 Projectile temp = new Projectile(turretObject.GlobalTransform.m5, -turretObject.GlobalTransform.m4);
+
+                // Set the position to be near the end of the turret's barrel upon spawning.
                 temp.SetPosition(turretObject.GlobalTransform.m7 + (turretObject.GlobalTransform.m5 * 30), turretObject.GlobalTransform.m8 + (-turretObject.GlobalTransform.m4 * 30));
+
+                // Add it to the projectile holder.
                 projectileHolder.AddChild(temp);
             }
             if (IsKeyPressed(KeyboardKey.KEY_P))
@@ -297,7 +349,7 @@ namespace MatrixHierarchies
             #endregion
 
             #region Projectiles
-            // Check to see if the projectile acually needs to be deleted
+            // Check to see if the projectile acually needs to be deleted first.
             for (int i = 0; i < projectileHolder.GetChildCount(); i++)
             {
                 if (projectileHolder.GetChild(i).removeMe)
@@ -307,17 +359,58 @@ namespace MatrixHierarchies
             }
             #endregion
 
-            #region Collision Demo
-            if (playerCollider.Overlaps(solidCollider) && testHP > 0)
+            #region Collision Logic
+            // PLAYER
+            // Checking if the player is hitting any of the destructable objects.
+            // This limits movement and pushes the player out of the collision box.
+
+            // NEW METHOD FOR COLLISION TODO
+            // Step one: record transform of the player in a single update.
+            // Step two: check for collision with box.
+            // Does it collide? if yes:
+            // Step three: restore the transform of the update before the collision.
+            for (int i = 0; i < destructableHolder.GetChildCount(); i++)
             {
-                tankObject.SetPosition(tankObject.GlobalTransform.m7 - (0.1f * Math.Abs(tankObject.GlobalTransform.m5)), tankObject.GlobalTransform.m8 - (0.1f * Math.Abs(-tankObject.GlobalTransform.m4)));
-                isCollidingWall = true;
-            }
-            else
-            {
-                isCollidingWall = false;
+                Destructable temp = (Destructable)destructableHolder.GetChild(i);
+
+                float transformX = 0;
+                float transformY = 0;
+
+                if (playerCollider.Overlaps(temp.destCollider) && temp.destHP > 0)
+                {
+                    isCollidingWall = true;
+
+                    if (tankObject.GlobalTransform.m1 < 0)
+                    {
+                        transformX = 0.4f * Math.Abs(tankObject.GlobalTransform.m1);
+                    }
+                    else
+                    {
+                        transformX = -(0.4f * Math.Abs(tankObject.GlobalTransform.m1));
+                    }
+
+                    if (tankObject.GlobalTransform.m2 < 0)
+                    {
+                        transformY = 0.4f * Math.Abs(tankObject.GlobalTransform.m2);
+                    }
+                    else
+                    {
+                        transformY = -(0.4f * Math.Abs(tankObject.GlobalTransform.m2));
+                    }
+
+                    tankObject.SetPosition(tankObject.GlobalTransform.m7 + transformX, tankObject.GlobalTransform.m8 + transformY);
+
+                    // Break here to prevent any more checks setting isCollidingWall to false when you're hitting at least one object.
+                    break;
+                }
+                else
+                {
+                    isCollidingWall = false;
+                }
             }
 
+            // Checking to see if the player is in the red/green box.
+            // If so, the box will turn red.
             if (boxCollider.Overlaps(playerCollider))
             {
                 boxColor = Color.RED;
@@ -327,16 +420,27 @@ namespace MatrixHierarchies
                 boxColor = Color.GREEN;
             }
 
+            // PROJECTILES
             for (int i = 0; i < projectileHolder.GetChildCount(); i++)
             {
+                // Grab a Projectile from the holder
                 Projectile temp = (Projectile)projectileHolder.GetChild(i);
 
-                if (temp.projectileCollider.Overlaps(solidCollider) && testHP > 0)
+                // Check against the Destructable items in the holder.
+                // This takes away 1 HP from the itme and discards the projectile.
+                for (int k = 0; k < destructableHolder.GetChildCount(); k++)
                 {
-                    projectileHolder.RemoveChild(temp);
-                    testHP--;
-                }
+                    Destructable tempDest = (Destructable)destructableHolder.GetChild(k);
 
+                    if (temp.projectileCollider.Overlaps(tempDest.destCollider) && tempDest.destHP > 0)
+                    {
+                        projectileHolder.RemoveChild(temp);
+                        tempDest.destHP--;
+                    }
+                }
+                
+                // Check against the Targets in the holder.
+                // This will give the player a point and respawn the target elsewhere.
                 for (int j = 0; j < targetHolder.GetChildCount(); j++)
                 {
                     Target temptarget = (Target)targetHolder.GetChild(j);
@@ -349,6 +453,8 @@ namespace MatrixHierarchies
                     }
                 }
 
+                // Check to see if the projectile is in the green/red box.
+                // But first- if the player already is in there, we won't check this.
                 if (!boxCollider.Overlaps(playerCollider))
                 {
                     if (temp.projectileCollider.Overlaps(boxCollider))
@@ -361,7 +467,6 @@ namespace MatrixHierarchies
                         boxColor = Color.GREEN;
                     }
                 }
-
             }
             #endregion
 
@@ -372,13 +477,7 @@ namespace MatrixHierarchies
             }
 
             #region Debug - KEEP COMMENTED UNLESS TESTING
-            //debugTimer++;
-            //if (debugTimer % 200 == 0)
-            //{
-            //    turretObject.GlobalTransform.PrintCels();
-            //}
-            //Console.WriteLine($"OtherCollider dets ={playerCollider.min.x}, {playerCollider.min.y} {playerCollider.max.x}, {playerCollider.max.y}");
-            //Console.WriteLine($"BoxCollider dets ={boxCollider.min.x}, {boxCollider.min.y} {boxCollider.max.x}, {boxCollider.max.y}");
+
             #endregion
         }
 
@@ -388,21 +487,20 @@ namespace MatrixHierarchies
 
             ClearBackground(Color.RAYWHITE);
 
-            DrawRectangle(120, 120, 80, 80, boxColor);
 
-            if (testHP > 0)
-            {
-                DrawRectangle(455, 255, 50, 50, Color.DARKPURPLE);
-            }
+
+            // Green/red square
+            DrawRectangle(120, 120, 80, 80, boxColor);
 
             if (showHitboxCorners)
             {
                 Color cornerColor = new Color();
 
-                DrawText("HITBOX VIEW", 60, 10, 12, rainbow);
-
+                // For loops a finite 4 times- once for each corner.
+                // Sphere colliders are ommited from this since their hitbox is their size.
                 for (int i = 0; i < 4; i++)
                 {
+                    // This will create a checker pattern, purple being min/max.
                     if (i % 2 == 0)
                     {
                         cornerColor = Color.GREEN;
@@ -412,11 +510,21 @@ namespace MatrixHierarchies
                         cornerColor = Color.DARKPURPLE;
                     }
 
+                    // Player's collider
                     DrawCircle((int)playerCollider.Corners()[i].x, (int)playerCollider.Corners()[i].y, 6, cornerColor);
+
+                    // Red/green box's collider
                     DrawCircle((int)boxCollider.Corners()[i].x, (int)boxCollider.Corners()[i].y, 6, cornerColor);
-                    if (testHP > 0)
+
+                    // Destructable items colliders
+                    for (int j = 0; j < destructableHolder.GetChildCount(); j++)
                     {
-                        DrawCircle((int)solidCollider.Corners()[i].x, (int)solidCollider.Corners()[i].y, 6, cornerColor);
+                        Destructable temp = (Destructable)destructableHolder.GetChild(j);
+
+                        if (temp.destHP > 0)
+                        {
+                            DrawCircle((int)temp.destCollider.Corners()[i].x, (int)temp.destCollider.Corners()[i].y, 6, cornerColor);
+                        }
                     }
                 }
             }
@@ -426,17 +534,25 @@ namespace MatrixHierarchies
                 s.Draw();
             }
 
+            // TEXT SHOULD BE DRAWN ABOVE ALL OTHER ITEMS; PLACE TEXT BELOW HERE
+
+            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
+            if (showHitboxCorners)
+            {
+                DrawText("HITBOX VIEW", 60, 10, 12, rainbow);
+            }
+
+            DrawText($"Time Left: {remainingTime}", 245, 20, 18, Color.RED);
+
+            DrawText("SCORE:", 540, 10, 14, Color.DARKGRAY);
+            DrawText($"{score}", 595, 10, 14, rainbow);
+
             DrawText("Highscores:", 10, 400, 20, rainbow);
             for (int i = 0; i < highscores.Length; i++)
             {
                 DrawText($"{i + 1}: {highscores[i]}", 20, 425 + (15 * i), 14, Color.DARKGRAY);
             }
 
-            DrawText($"Time Left: {remainingTime}", 245, 20, 18, Color.RED);
-
-            DrawText($"FPS: {fps.ToString()}", 10, 10, 12, rainbow);
-            DrawText("SCORE:", 540, 10, 14, Color.DARKGRAY);
-            DrawText($"{score}", 595, 10, 14, rainbow);
             DrawText("Press P to toggle hitbox logic.", 350, 460, 12, Color.DARKGRAY);
             if (collisionToggle)
             {
@@ -450,6 +566,9 @@ namespace MatrixHierarchies
             EndDrawing();
         }
 
+        /// <summary>
+        /// Reads the highscore file and stores them in an array for usein displaying and editing.
+        /// </summary>
         public void GetScores()
         {
             StreamReader reader = new StreamReader(highscorePath);
@@ -460,6 +579,10 @@ namespace MatrixHierarchies
             reader.Close();
         }
 
+        /// <summary>
+        /// Checks the score over the last play session against the values of the previous highscores.
+        /// Accordingly updates scores.
+        /// </summary>
         public void SetScores()
         {
             StreamWriter writer = new StreamWriter(highscorePath);
