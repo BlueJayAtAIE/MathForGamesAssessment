@@ -554,7 +554,7 @@ namespace MathFunctions
         /// <summary>
         /// Sets the Matrix3 to the supplied Matrix3.
         /// </summary>
-        void Set(Matrix3 m)
+        public void Set(Matrix3 m)
         {
             m1 = m.m1; m4 = m.m4; m7 = m.m7;
             m2 = m.m2; m5 = m.m5; m8 = m.m8;

@@ -14,7 +14,7 @@ namespace MatrixHierarchies
             string flavor()
             {
                 string result = "";
-                switch (MathFunctions.Tools.rng.Next(1, 8))
+                switch (MathFunctions.Tools.rng.Next(1, 11))
                 {
                     case 1:
                         result = "Are you actually reading the window name?";
@@ -36,6 +36,11 @@ namespace MatrixHierarchies
                         break;
                     case 7:
                         result = "So much content!";
+                        break;
+                    case 8:
+                    case 9:
+                    case 10:
+                        result = "Tanks for Everything!";
                         break;
                     default:
                         result = "Tanks for N o t h i n g.";

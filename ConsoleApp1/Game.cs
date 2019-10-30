@@ -8,6 +8,7 @@ namespace MatrixHierarchies
 {
     class Game
     {
+        // Time Related
         Timer gameTime = new Timer();
 
         public float remainingTime = 1;
@@ -20,12 +21,12 @@ namespace MatrixHierarchies
         private float deltaTime;
         private float playerSpeed = 100f;
 
+        // Debug
         // false = static hitbox, true = resizing hitbox.
         bool collisionToggle = false;
         bool showHitboxCorners = false;
 
-        bool isCollidingWall = false;
-
+        // Hierarchy, SceneObjects and "holders"
         List<SceneObject> Hierarchy = new List<SceneObject>();
 
         SceneObject tankObject = new SceneObject();
@@ -41,21 +42,28 @@ namespace MatrixHierarchies
         SceneObject targetHolder = new SceneObject();
 
         SceneObject wallHolder = new SceneObject();
-
+        
+        // Score related
         int score = 0;
         private int[] highscores = new int[3];
         private bool newHighscore = false;
         private int newScorePlace = -1;
         private static string highscorePath = "highscores.txt";
 
+        // Player related
         MathFunctions.AABB playerCollider = new MathFunctions.AABB(new MathFunctions.Vector3(0, 0, 0), new MathFunctions.Vector3(0, 0, 0));
         SceneObject[] playerCornerPoints = new SceneObject[4] { new SceneObject(), new SceneObject(), new SceneObject(), new SceneObject()};
         MathFunctions.Vector3[] pCornersArray = new MathFunctions.Vector3[4];
         MathFunctions.Vector3 playerFacing = new MathFunctions.Vector3(0, 0, 0);
+        MathFunctions.Matrix3 lastPlayerTransform = new MathFunctions.Matrix3();
 
+        // Collision
         Color boxColor = Color.GREEN;
         MathFunctions.AABB boxCollider = new MathFunctions.AABB(new MathFunctions.Vector3(120, 120, 0), new MathFunctions.Vector3(200, 200, 0));
 
+        bool isCollidingWall = false;
+
+        // Extra juice
         public float rainbowColorF = 1.0f;
         public Color rainbow = new Color();
 
@@ -64,8 +72,7 @@ namespace MatrixHierarchies
             GetScores();
 
             //TODO: SET UP THE WALLS AROUND THE MAP - DONE BUT ALSO MAKE THE PLAYER COLLIDE WITH THEM
-            //TODO: MAKE THINGS LOOK LESS LIKE HOT GAGBAGE
-           
+            
             // Add the holders and tank objects to the Hierarchy.
             Hierarchy.Add(wallHolder);
             Hierarchy.Add(projectileHolder);
@@ -85,6 +92,7 @@ namespace MatrixHierarchies
                 destructableHolder.AddChild(new Destructable());
             }
 
+            // Changing the positions of all the walls to fit the screen.
             Wall topWall = new Wall(true);
             Wall bottomWall = new Wall(true);
             Wall leftWall = new Wall(false);
@@ -95,6 +103,7 @@ namespace MatrixHierarchies
             leftWall.SetPosition(0, 0);
             RightWall.SetPosition(600, 0);
 
+            // Adding walls to the wallholder SceneObject.
             wallHolder.AddChild(topWall);
             wallHolder.AddChild(bottomWall);
             wallHolder.AddChild(leftWall);
@@ -134,21 +143,21 @@ namespace MatrixHierarchies
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("\n===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("            CONTROLS                                             ");
-            Console.WriteLine("   W - Forwards                                                  ");
-            Console.WriteLine("   S - Backwards                                                 ");
-            Console.WriteLine("   A - Rotate Left                                               ");
-            Console.WriteLine("   D - Rotate Right                                              ");
-            Console.WriteLine("   Q - Rotate Barrel Left                                        ");
-            Console.WriteLine("   E - Rotate Barrel Right                                       ");
-            Console.WriteLine("   Spacebar - Fire Projectile                                    ");
-            Console.WriteLine("   I - (Debug) Disable game timer                               ");
-            Console.WriteLine("   O - (Debug) Show Hitbox Corners                               ");
-            Console.WriteLine("   P - (Debug) Change Collider Logic                             ");
-            Console.WriteLine("                                                                 ");
-            Console.WriteLine("   Shoot targets for points.                                                   ");
-            Console.WriteLine("   Green box interacts with player and bullets.                                ");
-            Console.WriteLine("   Boxes are solid, you can break them with shots.                       ");
+            Console.WriteLine("            CONTROLS                                ");
+            Console.WriteLine("   W - Forwards                                     ");
+            Console.WriteLine("   S - Backwards                                    ");
+            Console.WriteLine("   A - Rotate Left                                  ");
+            Console.WriteLine("   D - Rotate Right                                 ");
+            Console.WriteLine("   Q - Rotate Barrel Left                           ");
+            Console.WriteLine("   E - Rotate Barrel Right                          ");
+            Console.WriteLine("   Spacebar - Fire Projectile                       ");
+            Console.WriteLine("   I - (Debug) Disable game timer                   ");
+            Console.WriteLine("   O - (Debug) Show Hitbox Corners                  ");
+            Console.WriteLine("   P - (Debug) Change Collider Logic                ");
+            Console.WriteLine("                                                    ");
+            Console.WriteLine("   Shoot targets for points.                        ");
+            Console.WriteLine("   Green box interacts with player and bullets.     ");
+            Console.WriteLine("   Boxes are solid, you can break them with 3 shots.");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("===============================================================================");
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -206,8 +215,7 @@ namespace MatrixHierarchies
 
                 EndDrawing();
 
-                // Escape works too.
-                if (IsKeyPressed(KeyboardKey.KEY_SPACE) || IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+                if (IsKeyPressed(KeyboardKey.KEY_SPACE))
                 {
                     okayToGo = true;
                 }
@@ -277,6 +285,8 @@ namespace MatrixHierarchies
             #endregion
 
             #region Player Input
+            lastPlayerTransform.Set(tankObject.GlobalTransform);
+
             // Player movement is restricted when colliding with a wall.
             // They can still move their turret and fire however.
             if (IsKeyDown(KeyboardKey.KEY_A) && !isCollidingWall)
@@ -363,42 +373,36 @@ namespace MatrixHierarchies
             // PLAYER
             // Checking if the player is hitting any of the destructable objects.
             // This limits movement and pushes the player out of the collision box.
-
-            // NEW METHOD FOR COLLISION TODO
-            // Step one: record transform of the player in a single update.
-            // Step two: check for collision with box.
-            // Does it collide? if yes:
-            // Step three: restore the transform of the update before the collision.
             for (int i = 0; i < destructableHolder.GetChildCount(); i++)
             {
                 Destructable temp = (Destructable)destructableHolder.GetChild(i);
-
-                float transformX = 0;
-                float transformY = 0;
 
                 if (playerCollider.Overlaps(temp.destCollider) && temp.destHP > 0)
                 {
                     isCollidingWall = true;
 
-                    if (tankObject.GlobalTransform.m1 < 0)
-                    {
-                        transformX = 0.4f * Math.Abs(tankObject.GlobalTransform.m1);
-                    }
-                    else
-                    {
-                        transformX = -(0.4f * Math.Abs(tankObject.GlobalTransform.m1));
-                    }
+                    tankObject.SetPosition(lastPlayerTransform.m7, lastPlayerTransform.m8);
 
-                    if (tankObject.GlobalTransform.m2 < 0)
-                    {
-                        transformY = 0.4f * Math.Abs(tankObject.GlobalTransform.m2);
-                    }
-                    else
-                    {
-                        transformY = -(0.4f * Math.Abs(tankObject.GlobalTransform.m2));
-                    }
+                    // Break here to prevent any more checks setting isCollidingWall to false when you're hitting at least one object.
+                    break;
+                }
+                else
+                {
+                    isCollidingWall = false;
+                }
+            }
 
-                    tankObject.SetPosition(tankObject.GlobalTransform.m7 + transformX, tankObject.GlobalTransform.m8 + transformY);
+            // Checking for the player hitting any of the walls.
+            // This limits movement and pushes the player out of the collision box.
+            for (int i = 0; i < wallHolder.GetChildCount(); i++)
+            {
+                Wall temp = (Wall)wallHolder.GetChild(i);
+
+                if (playerCollider.Overlaps(temp.wallCollider))
+                {
+                    isCollidingWall = true;
+
+                    tankObject.SetPosition(lastPlayerTransform.m7, lastPlayerTransform.m8);
 
                     // Break here to prevent any more checks setting isCollidingWall to false when you're hitting at least one object.
                     break;
@@ -525,6 +529,14 @@ namespace MatrixHierarchies
                         {
                             DrawCircle((int)temp.destCollider.Corners()[i].x, (int)temp.destCollider.Corners()[i].y, 6, cornerColor);
                         }
+                    }
+
+                    // Walls Colliders
+                    for (int j = 0; j < wallHolder.GetChildCount(); j++)
+                    {
+                        Wall temp = (Wall)wallHolder.GetChild(j);
+
+                        DrawCircle((int)temp.wallCollider.Corners()[i].x, (int)temp.wallCollider.Corners()[i].y, 6, cornerColor);
                     }
                 }
             }

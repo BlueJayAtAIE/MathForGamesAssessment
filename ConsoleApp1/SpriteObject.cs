@@ -93,9 +93,9 @@ namespace MatrixHierarchies
 
         public void Respawn()
         {
-            spawnPoint.x = MathFunctions.Tools.rng.Next(40, 600);
+            spawnPoint.x = MathFunctions.Tools.rng.Next(60, 540);
             globalTransform.m7 = spawnPoint.x;
-            spawnPoint.y = MathFunctions.Tools.rng.Next(40, 440);
+            spawnPoint.y = MathFunctions.Tools.rng.Next(60, 420);
             globalTransform.m8 = spawnPoint.y;
         }
 
@@ -127,12 +127,12 @@ namespace MatrixHierarchies
 
             while (true)
             {
-                spawnPoint.x = MathFunctions.Tools.rng.Next(40, 600);
+                spawnPoint.x = MathFunctions.Tools.rng.Next(60, 540);
                 globalTransform.m7 = spawnPoint.x;
-                spawnPoint.y = MathFunctions.Tools.rng.Next(40, 440);
+                spawnPoint.y = MathFunctions.Tools.rng.Next(60, 380);
                 globalTransform.m8 = spawnPoint.y;
 
-                if (!(250 < spawnPoint.x && 320 > spawnPoint.x || 180 > spawnPoint.y && 300 < spawnPoint.y))
+                if (!((250 < spawnPoint.x && 350 > spawnPoint.x) || (180 > spawnPoint.y && 300 < spawnPoint.y)))
                 {
                     break;
                 }
@@ -172,6 +172,12 @@ namespace MatrixHierarchies
                 Load("WallTall.png");
             }
 
+            wallCollider.Resize(new MathFunctions.Vector3(globalTransform.m7, globalTransform.m8, 0),
+                                new MathFunctions.Vector3(globalTransform.m7 + (texture.width), globalTransform.m8 + (texture.height), 0));
+        }
+
+        public override void OnUpdate(float deltaTime)
+        {
             wallCollider.Resize(new MathFunctions.Vector3(globalTransform.m7, globalTransform.m8, 0),
                                 new MathFunctions.Vector3(globalTransform.m7 + (texture.width), globalTransform.m8 + (texture.height), 0));
         }
